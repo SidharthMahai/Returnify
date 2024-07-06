@@ -2,11 +2,11 @@
 import React from 'react';
 import {
   Box,
-  Flex,
+  Center,
   Heading,
   Text,
   Image,
-  Center
+  Flex,
 } from '@chakra-ui/react';
 
 const App = () => {
@@ -21,7 +21,7 @@ const App = () => {
         bg="white"
       >
         <Image
-          src="https://images.unsplash.com/photo-1567427017947-1dbf5d82db1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+          src="https://source.unsplash.com/featured/?investment,finance"
           alt="Live Returns"
           objectFit="cover"
           h="200px"
