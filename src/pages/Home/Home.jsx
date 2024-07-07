@@ -1,11 +1,10 @@
-import React from 'react';
 import { Center, SimpleGrid, VStack } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Hero from '../../components/Hero/Hero';
 
 const Home = () => (
-  <VStack spacing={10} bg="gray.100" minH="100vh">
+  <VStack spacing={10} minH="100vh">
     <Hero
       title="Returnify"
       description="Welcome to Returnify! Your one-stop solution for unique financial calculators that you won't find anywhere else on the internet. Get real-time updates on mutual fund NAVs, calculate HRA exemptions considering multiple salary and rent changes, and much more."

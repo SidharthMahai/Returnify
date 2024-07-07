@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import LiveMutualFundsNav from './pages/LiveMutualFundsNav/LiveMutualFundsNav'; // Update the path as necessary
@@ -8,8 +7,8 @@ import Header from './components/Header/Header';
 
 const App = () => (
   <>
-    <Header />
     <Router>
+      <Header />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/live-mutual-funds-nav" element={<LiveMutualFundsNav />} />

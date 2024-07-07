@@ -1,38 +1,59 @@
-import React from 'react';
-import { Box, Flex, Heading, Spacer, Button, useColorMode, useColorModeValue } from '@chakra-ui/react';
-import { useHistory } from 'react-router-dom';
+import {
+  Box,
+  Flex,
+  Heading,
+  Spacer,
+  Button,
+  useColorMode,
+  useColorModeValue,
+} from '@chakra-ui/react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
-  const history = useHistory();
   const { toggleColorMode } = useColorMode();
   const bg = useColorModeValue('white', 'gray.800');
   const color = useColorModeValue('gray.800', 'white');
 
-  const navigateTo = (route) => {
-    history.push(route);
-  };
-
   return (
     <Box bg={bg} px={4} boxShadow="md">
       <Flex h={16} alignItems="center" justifyContent="space-between">
-        <Heading as="h1" size="lg" color={color} cursor="pointer" onClick={() => navigateTo('/')}>
-          Returnify
+        <Heading as="h1" size="lg" color={color}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            Returnify
+          </Link>
         </Heading>
         <Spacer />
         <Flex alignItems="center">
-          <Button variant="ghost" color={color} mr={4} onClick={() => navigateTo('/')}>
-            Home
-          </Button>
-          <Button variant="ghost" color={color} mr={4} onClick={() => navigateTo('/live-mutual-funds-nav')}>
-            Live NAV
-          </Button>
-          <Button variant="ghost" color={color} mr={4} onClick={() => navigateTo('/hra-exemption')}>
-            HRA Calculator
-          </Button>
-          <Button variant="ghost" color={color} mr={4} onClick={() => navigateTo('/ppf-calculator')}>
-            PPF Calculator
-          </Button>
-          <Button onClick={toggleColorMode} variant="ghost" color={color} mr={4}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Button variant="ghost" color={color} mr={4}>
+              Home
+            </Button>
+          </Link>
+          <Link
+            to="/live-mutual-funds-nav"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <Button variant="ghost" color={color} mr={4}>
+              Live NAV
+            </Button>
+          </Link>
+          <Link
+            to="/hra-exemption"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <Button variant="ghost" color={color} mr={4}>
+              HRA Calculator
+            </Button>
+          </Link>
+          <Link
+            to="/ppf-calculator"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <Button variant="ghost" color={color} mr={4}>
+              PPF Calculator
+            </Button>
+          </Link>
+          <Button onClick={toggleColorMode} variant="ghost" color={color}>
             Toggle {useColorModeValue('Dark', 'Light')}
           </Button>
         </Flex>
