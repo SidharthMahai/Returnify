@@ -1,43 +1,24 @@
-// App.js
 import React from 'react';
-import {
-  Box,
-  Center,
-  Heading,
-  Text,
-  Image,
-  Flex,
-} from '@chakra-ui/react';
+import { Center, SimpleGrid } from '@chakra-ui/react';
+import Card from './components/Card/Card';
 
-const App = () => {
-  return (
-    <Center h="100vh" bg="gray.100">
-      <Box
-        maxW="lg"
-        borderWidth="1px"
-        borderRadius="lg"
-        overflow="hidden"
-        boxShadow="md"
-        bg="white"
-      >
-        <Image
-          src="https://source.unsplash.com/featured/?investment,finance"
-          alt="Live Returns"
-          objectFit="cover"
-          h="200px"
-          w="100%"
-        />
-        <Box p="6">
-          <Heading as="h2" size="xl" mb={4}>
-            Live Mutual Funds NAV
-          </Heading>
-          <Text fontSize="md" color="gray.700">
-            Stay updated with the latest Net Asset Value (NAV) of your mutual funds in real-time. Monitor the performance of your investments and make informed decisions with accurate and up-to-date data.
-          </Text>
-        </Box>
-      </Box>
-    </Center>
-  );
-};
+const Home = () => (
+  <Center py={10} bg="gray.100" minH="100vh">
+    <SimpleGrid columns={[1, 1, 3]} spacing={10} maxW="90%">
+      <Card
+        title="Live Mutual Funds NAV"
+        description="Stay updated with the latest Net Asset Value (NAV) of your mutual funds in real-time. Monitor the performance of your investments and make informed decisions with accurate and up-to-date data."
+      />
+      <Card
+        title="HRA Exemption Calculator"
+        description="Calculate your House Rent Allowance (HRA) exemption easily. Understand how much of your HRA is exempt from tax and optimize your salary structure."
+      />
+      <Card
+        title="PPF Returns Calculator"
+        description="Estimate the returns on your Public Provident Fund (PPF) investments. Plan your savings and understand the growth of your PPF account over time."
+      />
+    </SimpleGrid>
+  </Center>
+);
 
-export default App;
+export default Home;
