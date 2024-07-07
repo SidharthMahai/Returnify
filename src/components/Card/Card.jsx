@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flex, Box, Heading, Text } from '@chakra-ui/react';
+
 const Card = ({ title, description }) => (
   <Flex
     direction="column"
@@ -10,6 +11,12 @@ const Card = ({ title, description }) => (
     boxShadow="md"
     bg="white"
     height="350px"
+    cursor="pointer"
+    transition="transform 0.2s"
+    _hover={{
+      transform: 'scale(1.05)',
+      boxShadow: 'lg',
+    }}
   >
     <Box p="8" flex="1" d="flex" flexDirection="column">
       <Heading as="h2" size="lg" mb={4}>
