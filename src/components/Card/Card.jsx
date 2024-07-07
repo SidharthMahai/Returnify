@@ -4,13 +4,14 @@ import { Flex, Box, Heading, Text } from '@chakra-ui/react';
 const Card = ({ title, description }) => (
   <Flex
     direction="column"
-    maxW="320px"
+    maxW="300px"
+    maxH="300px"
+    minH="300px"
     borderWidth="1px"
     borderRadius="lg"
     overflow="hidden"
     boxShadow="md"
     bg="white"
-    height="350px"
     cursor="pointer"
     transition="transform 0.2s"
     _hover={{
