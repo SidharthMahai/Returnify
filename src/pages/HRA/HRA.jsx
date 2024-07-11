@@ -2,29 +2,27 @@ import {
   FormControl,
   FormLabel,
   HStack,
-  Container,
   Radio,
   RadioGroup,
   Button,
   Select,
   Center,
+  VStack,
+  Box,
 } from '@chakra-ui/react';
 import './exemptions.css';
 import './myLib.css';
 import { useState } from 'react';
 import CustomTable from '../../components/CustomTable/CustomTable';
-
+import Hero from '../../components/Hero/Hero';
 function HouseRentAllowance() {
   let [basicSalaryReceived, setBasicSalary] = useState(0);
   let [daReceived, setDaReceived] = useState(0);
   let [hraReceived, setHraReceived] = useState(0);
   let [rentPaid, setRentPaid] = useState(0);
-  let [isMetroCity, setIsMetroCity] = useState(1);
+  let [isMetroCity, setIsMetroCity] = useState(0);
   let [isError, setError] = useState(false);
-  let [arr, setArr] = useState([]);
-  let [exemptedAmount, setExemptedAmount] = useState(0);
   let [hasMultipleValues, sethasMultipleValues] = useState(0);
-  let [chargeableTotax, setChargeableTotax] = useState(0);
   let [columns, setColumns] = useState([]);
   let [rows, setRows] = useState([{}]);
   let [bulkRows, setBulkRows] = useState([
@@ -214,12 +212,11 @@ function HouseRentAllowance() {
     var BS = basicSalaryReceived === '' ? 0 : parseInt(basicSalaryReceived);
     var DA = daReceived === '' ? 0 : parseInt(daReceived);
     var RP = rentPaid === '' ? 0 : parseInt(rentPaid);
-    setArr([]);
+
     setColumns([]);
     setRows([{}]);
-    setExemptedAmount(0);
-    setChargeableTotax(0);
-    if (hasMultipleValues !== 1 && (BS < 1 || HRA < 1 || RP < 1)) {
+
+    if (hasMultipleValues == 0 && (BS < 1 || HRA < 1 || RP < 1)) {
       setError(true);
     } else {
       setError(false);
@@ -227,175 +224,230 @@ function HouseRentAllowance() {
       columns.push('Calculation');
       columns.push('Value');
       setColumns(columns);
-      if (hasMultipleValues && bulkRows.length >= 1 && bulkRows[0].id !== 1) {
+      if (
+        hasMultipleValues != 0 &&
+        bulkRows.length >= 1 &&
+        bulkRows[0].id !== 1
+      ) {
         var exempted = 0;
         var chargeable = 0;
-        var allRows = [];
         bulkRows.forEach((row) => {
-          exempted += calculateHRAExemption(
-            row.rowValues[2],
-            row.rowValues[0],
-            row.rowValues[1],
-            row.rowValues[3],
-            row.rowValues[4]
+          var existingfromMonth = months.filter(
+            (a) => a.monthName === row.rowValues[5]
           );
-          chargeable +=
-            row.rowValues[2] -
+          var existingtoMonth = months.filter(
+            (a) => a.monthName === row.rowValues[6]
+          );
+          var numberOfMonths =
+            existingtoMonth[0].monthNumber -
+            existingfromMonth[0].monthNumber +
+            1;
+
+          var exemptedForRow =
             calculateHRAExemption(
               row.rowValues[2],
               row.rowValues[0],
               row.rowValues[1],
               row.rowValues[3],
               row.rowValues[4]
-            );
-          var valuesArray = returnHRAFormulaValues(
-            row.rowValues[2],
-            row.rowValues[0],
-            row.rowValues[1],
-            row.rowValues[3],
-            row.rowValues[4]
-          );
-          var newRows = [];
-          var rowid = 0;
-          var calcs = [
-            'Actual HRA received',
-            '50%/40% of basic + DA',
-            'Rent paid - 10% of (Basic + DA)',
-          ];
-          calcs.forEach((calc, index) => {
-            newRows.push({
-              id: rowid++,
-              values: [
-                calc + ' (' + row.rowValues[5] + ' - ' + row.rowValues[6] + ')',
-                valuesArray[index],
-              ],
-            });
-          });
-          newRows.push({
-            id: rowid++,
-            values: [
-              'Exempted for month/s ' +
-                row.rowValues[5] +
-                ' - ' +
-                row.rowValues[6],
-              calculateHRAExemption(
-                row.rowValues[2],
-                row.rowValues[0],
-                row.rowValues[1],
-                row.rowValues[3],
-                row.rowValues[4]
-              ),
-            ],
-          });
-          newRows.push({
-            id: rowid++,
-            values: [
-              'Chargeable for month/s ' +
-                row.rowValues[5] +
-                ' - ' +
-                row.rowValues[6],
-              row.rowValues[2] -
-                calculateHRAExemption(
-                  row.rowValues[2],
-                  row.rowValues[0],
-                  row.rowValues[1],
-                  row.rowValues[3],
-                  row.rowValues[4]
-                ),
-            ],
-          });
-          allRows.push(newRows);
+            ) * numberOfMonths;
+
+          exempted += exemptedForRow;
+          var chargeableForThis =
+            row.rowValues[3] * numberOfMonths - exemptedForRow;
+          chargeable += chargeableForThis;
         });
-        setArr(allRows);
-        setExemptedAmount(exempted);
-        setChargeableTotax(chargeable);
-      } else {
-        var rows = [];
-        var id = 0;
-        rows.push({
-          id: id++,
-          values: ['Actual HRA received', HRA],
-        });
-        let sumOfBPAndDA = BS + DA;
-        rows.push({
-          id: id++,
-          values: [
-            '50%/40% of basic + DA',
-            isMetroCity ? (50 / 100) * sumOfBPAndDA : (40 / 100) * sumOfBPAndDA,
-          ],
-        });
-        rows.push({
-          id: id++,
-          values: [
-            'Rent paid - 10% of (Basic + DA)',
-            RP - (10 / 100) * sumOfBPAndDA,
-          ],
-        });
-        let exemption = calculateHRAExemption(HRA, BS, DA, RP, isMetroCity);
-        rows.push({
-          id: id++,
-          values: ['Exempted from HRA for year', exemption],
-        });
-        rows.push({
-          id: id++,
-          values: ['Chargeable to tax for year', HRA - exemption],
-        });
+
+        var rows = [
+          {
+            id: 1,
+            rowValues: ['HRA Exempted', exempted],
+          },
+          {
+            id: 2,
+            rowValues: ['HRA Chargeable to tax', chargeable],
+          },
+        ];
+
         setRows(rows);
-        setExemptedAmount(exemption);
-        setChargeableTotax(HRA - exemption);
+      } else {
+        var numberOfMonths = 12;
+        var exempted2 =
+          calculateHRAExemption(HRA, BS, DA, RP, isMetroCity) * numberOfMonths;
+        var formulaValues = returnHRAFormulaValues(
+          HRA,
+          BS,
+          DA,
+          RP,
+          isMetroCity
+        );
+
+        var chargeable2 = RP * numberOfMonths - exempted2;
+        var percentage = isMetroCity ? '50%' : '40%';
+
+        var rows2 = [
+          {
+            id: 1,
+            rowValues: [
+              'Actual HRA received',
+              formulaValues[0] * numberOfMonths,
+            ],
+          },
+          {
+            id: 2,
+            rowValues: [
+              percentage + ' of Basic Salary',
+              formulaValues[1] * numberOfMonths,
+            ],
+          },
+          {
+            id: 3,
+            rowValues: [
+              'Rent Paid in excess of 10% of salary',
+              formulaValues[2] * numberOfMonths,
+            ],
+          },
+          {
+            id: 4,
+            rowValues: ['HRA Exempted', exempted2],
+          },
+          {
+            id: 5,
+            rowValues: ['HRA Chargeable to tax', chargeable2],
+          },
+        ];
+
+        setRows(rows2);
       }
     }
   }
 
   return (
-    <Container centerContent>
-      <Center>
-        <FormControl>
-          <FormLabel>Do you have multiple values for year?</FormLabel>
-          <RadioGroup onChange={setMultipleValueChanges}>
-            <HStack spacing="24px">
-              <Radio value="1">Yes</Radio>
-              <Radio value="0">No</Radio>
-            </HStack>
-          </RadioGroup>
-        </FormControl>
-      </Center>
-      {hasMultipleValues ? (
-        <div>
+    <VStack spacing={10} minH="100vh">
+      <Hero
+        title="HRA Exemption Calculator"
+        description="Calculate your House Rent Allowance (HRA) exemption easily. Understand how much of your HRA is exempt from tax and optimize your salary structure."
+      />
+      <Box className="card" p={5} shadow="md" borderWidth="1px">
+        <Center>
+          <FormControl>
+            <FormLabel>Do you have multiple values for year?</FormLabel>
+            <RadioGroup defaultValue="0" onChange={setMultipleValueChanges}>
+              <HStack spacing="24px">
+                <Radio value="1">Yes</Radio>
+                <Radio value="0">No</Radio>
+              </HStack>
+            </RadioGroup>
+          </FormControl>
+        </Center>
+        {hasMultipleValues != 0 ? (
+          <div>
+            <div className="row">
+              <div className="col-md-6">
+                <FormControl isRequired>
+                  <FormLabel>From Month</FormLabel>
+                  <Select
+                    value={fromMonth}
+                    onChange={(e) => fromMonthClick(e.target.value)}
+                    placeholder="Select From Month"
+                  >
+                    {months.map((month) => (
+                      <option key={month.monthNumber} value={month.monthNumber}>
+                        {month.monthName}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <FormControl isRequired>
+                  <FormLabel>To Month</FormLabel>
+                  <Select
+                    value={toMonth}
+                    onChange={(e) => toMonthClick(e.target.value)}
+                    placeholder="Select To Month"
+                    isDisabled={toMonthDisabled}
+                  >
+                    {months.map((month) => (
+                      <option key={month.monthNumber} value={month.monthNumber}>
+                        {month.monthName}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <FormControl isRequired>
+                  <FormLabel>Basic Salary Received</FormLabel>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={basicSalaryReceived}
+                    onChange={(e) => setBasicSalary(e.target.value)}
+                  />
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <FormControl>
+                  <FormLabel>DA Received</FormLabel>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={daReceived}
+                    onChange={(e) => setDaReceived(e.target.value)}
+                  />
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <FormControl isRequired>
+                  <FormLabel>HRA Received</FormLabel>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={hraReceived}
+                    onChange={(e) => setHraReceived(e.target.value)}
+                  />
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <FormControl isRequired>
+                  <FormLabel>Rent Paid</FormLabel>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={rentPaid}
+                    onChange={(e) => setRentPaid(e.target.value)}
+                  />
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <FormControl isRequired>
+                  <FormLabel>Metro City?</FormLabel>
+                  <RadioGroup defaultValue="0" onChange={setIsMetroCity}>
+                    <HStack spacing="24px">
+                      <Radio value="1">Yes</Radio>
+                      <Radio value="0">No</Radio>
+                    </HStack>
+                  </RadioGroup>
+                </FormControl>
+              </div>
+              <div className="col-md-6">
+                <Button onClick={addNewValueInTable} colorScheme="teal">
+                  Add
+                </Button>
+              </div>
+            </div>
+            <div className="row">
+              <CustomTable
+                columns={bulkColumns}
+                rows={bulkRows}
+                onEdit={onChangeEdit}
+                onDelete={onChangeDelete}
+              />
+            </div>
+          </div>
+        ) : (
           <div className="row">
-            <div className="col-md-6">
-              <FormControl isRequired>
-                <FormLabel>From Month</FormLabel>
-                <Select
-                  value={fromMonth}
-                  onChange={(e) => fromMonthClick(e.target.value)}
-                  placeholder="Select From Month"
-                >
-                  {months.map((month) => (
-                    <option key={month.monthNumber} value={month.monthNumber}>
-                      {month.monthName}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div className="col-md-6">
-              <FormControl isRequired>
-                <FormLabel>To Month</FormLabel>
-                <Select
-                  value={toMonth}
-                  onChange={(e) => toMonthClick(e.target.value)}
-                  placeholder="Select To Month"
-                  isDisabled={toMonthDisabled}
-                >
-                  {months.map((month) => (
-                    <option key={month.monthNumber} value={month.monthNumber}>
-                      {month.monthName}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
             <div className="col-md-6">
               <FormControl isRequired>
                 <FormLabel>Basic Salary Received</FormLabel>
@@ -408,7 +460,7 @@ function HouseRentAllowance() {
               </FormControl>
             </div>
             <div className="col-md-6">
-              <FormControl isRequired>
+              <FormControl>
                 <FormLabel>DA Received</FormLabel>
                 <input
                   type="number"
@@ -443,115 +495,31 @@ function HouseRentAllowance() {
             <div className="col-md-6">
               <FormControl isRequired>
                 <FormLabel>Metro City?</FormLabel>
-                <RadioGroup onChange={setIsMetroCity} value={isMetroCity}>
+                <RadioGroup defaultValue="0" onChange={setIsMetroCity}>
                   <HStack spacing="24px">
-                    <Radio value={1}>Yes</Radio>
-                    <Radio value={0}>No</Radio>
+                    <Radio value="1">Yes</Radio>
+                    <Radio value="0">No</Radio>
                   </HStack>
                 </RadioGroup>
               </FormControl>
             </div>
-            <div className="col-md-6">
-              <Button onClick={addNewValueInTable} colorScheme="teal">
-                Add
-              </Button>
-            </div>
           </div>
-          <div className="row">
-            <CustomTable
-              columns={bulkColumns}
-              rows={bulkRows}
-              onEdit={onChangeEdit}
-              onDelete={onChangeDelete}
-            />
+        )}
+        <Button
+          onClick={calculateButtonClicked}
+          colorScheme="teal"
+          marginTop="20px"
+        >
+          Calculate HRA Exemption
+        </Button>
+        {isError && (
+          <div className="alert alert-danger" role="alert">
+            Please fill in all required fields correctly.
           </div>
-        </div>
-      ) : (
-        <div className="row">
-          <div className="col-md-6">
-            <FormControl isRequired>
-              <FormLabel>Basic Salary Received</FormLabel>
-              <input
-                type="number"
-                className="form-control"
-                value={basicSalaryReceived}
-                onChange={(e) => setBasicSalary(e.target.value)}
-              />
-            </FormControl>
-          </div>
-          <div className="col-md-6">
-            <FormControl isRequired>
-              <FormLabel>DA Received</FormLabel>
-              <input
-                type="number"
-                className="form-control"
-                value={daReceived}
-                onChange={(e) => setDaReceived(e.target.value)}
-              />
-            </FormControl>
-          </div>
-          <div className="col-md-6">
-            <FormControl isRequired>
-              <FormLabel>HRA Received</FormLabel>
-              <input
-                type="number"
-                className="form-control"
-                value={hraReceived}
-                onChange={(e) => setHraReceived(e.target.value)}
-              />
-            </FormControl>
-          </div>
-          <div className="col-md-6">
-            <FormControl isRequired>
-              <FormLabel>Rent Paid</FormLabel>
-              <input
-                type="number"
-                className="form-control"
-                value={rentPaid}
-                onChange={(e) => setRentPaid(e.target.value)}
-              />
-            </FormControl>
-          </div>
-          <div className="col-md-6">
-            <FormControl isRequired>
-              <FormLabel>Metro City?</FormLabel>
-              <RadioGroup onChange={setIsMetroCity} value={isMetroCity}>
-                <HStack spacing="24px">
-                  <Radio value={1}>Yes</Radio>
-                  <Radio value={0}>No</Radio>
-                </HStack>
-              </RadioGroup>
-            </FormControl>
-          </div>
-        </div>
-      )}
-      <Button
-        onClick={calculateButtonClicked}
-        colorScheme="teal"
-        marginTop="20px"
-      >
-        Calculate HRA Exemption
-      </Button>
-      {isError && (
-        <div className="alert alert-danger" role="alert">
-          Please fill in all required fields correctly.
-        </div>
-      )}
-      <CustomTable columns={columns} rows={rows} />
-      {arr.map((rows, index) => (
-        <CustomTable key={index} columns={columns} rows={rows} />
-      ))}
-      <div className="row">
-        <div className="col-md-6">
-          <FormLabel>Exempted Amount</FormLabel>
-          <div>{exemptedAmount}</div>
-        </div>
-        <div className="col-md-6">
-          <FormLabel>Chargeable to Tax</FormLabel>
-          <div>{chargeableTotax}</div>
-        </div>
-      </div>
-    </Container>
+        )}
+        <CustomTable columns={columns} rows={rows} />
+      </Box>
+    </VStack>
   );
 }
 
