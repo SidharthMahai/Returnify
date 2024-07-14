@@ -17,7 +17,6 @@ import Hero from '../../components/Hero/Hero';
 
 const LiveMutualFundsNav = () => {
   const [stockSymbol, setStockSymbol] = useState('');
-  const [stockName, setStockName] = useState('');
   const [livePrice, setLivePrice] = useState(null);
   const [yesterdayClose, setYesterdayClose] = useState(null);
   const [gainLossPercentage, setGainLossPercentage] = useState(null);
@@ -44,10 +43,6 @@ const LiveMutualFundsNav = () => {
       const yesterdayCloseValue = meta.previousClose;
       setYesterdayClose(yesterdayCloseValue);
 
-      // Stock name from the symbol
-      const stockNameValue = meta.symbol;
-      setStockName(stockNameValue);
-
       // Calculate gain/loss percentage
       const gainLoss = livePriceValue - yesterdayCloseValue;
       const gainLossPercent = (gainLoss / yesterdayCloseValue) * 100;
@@ -73,39 +68,45 @@ const LiveMutualFundsNav = () => {
         </Heading>
         <Input
           placeholder="Enter Stock Symbol (e.g., HAL)"
-          value={stockSymbol}
+          value={stockSymbol.toUpperCase()}
           onChange={handleStockSymbolChange}
           mb={3}
         />
         <Button colorScheme="blue" onClick={handleButtonClick} mb={3}>
           Get KPIs
         </Button>
-        {stockName && (
-          <Heading as="h4" size="md" mb={3} textAlign="center">
-            {stockName}
-          </Heading>
-        )}
-        <Divider mb={5} />
+        {/* <Divider mb={5} /> */}
         {livePrice !== null &&
           yesterdayClose !== null &&
           gainLossPercentage !== null && (
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10}>
-              <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
-                <StatLabel>Live Price</StatLabel>
-                <StatNumber>{livePrice.toFixed(2)}</StatNumber>
-              </Stat>
-              <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
-                <StatLabel>{"Yesterday's Close"}</StatLabel>
-                <StatNumber>{yesterdayClose.toFixed(2)}</StatNumber>
-              </Stat>
-              <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
-                <StatLabel>Gain/Loss Percentage</StatLabel>
-                <StatNumber>{`${gainLossPercentage.toFixed(2)}%`}</StatNumber>
-                <StatHelpText>
-                  {gainLossPercentage >= 0 ? 'Gain' : 'Loss'}
-                </StatHelpText>
-              </Stat>
-            </SimpleGrid>
+            <>
+              <Heading as="h4" size="md" mb={3} textAlign="center">
+                {stockSymbol.toUpperCase()}
+              </Heading>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10}>
+                <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
+                  <StatLabel>Live Price</StatLabel>
+                  <StatNumber>{livePrice.toFixed(2)}</StatNumber>
+                </Stat>
+                <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
+                  <StatLabel>{"Yesterday's Close"}</StatLabel>
+                  <StatNumber>{yesterdayClose.toFixed(2)}</StatNumber>
+                </Stat>
+                <Stat
+                  p={5}
+                  color={gainLossPercentage >= 0 ? 'green' : 'red'}
+                  shadow="md"
+                  borderWidth="1px"
+                  borderRadius="lg"
+                >
+                  <StatLabel>Gain/Loss Percentage</StatLabel>
+                  <StatNumber>{`${gainLossPercentage.toFixed(2)}%`}</StatNumber>
+                  <StatHelpText>
+                    {gainLossPercentage >= 0 ? 'Gain' : 'Loss'}
+                  </StatHelpText>
+                </Stat>
+              </SimpleGrid>
+            </>
           )}
       </Box>
     </VStack>
