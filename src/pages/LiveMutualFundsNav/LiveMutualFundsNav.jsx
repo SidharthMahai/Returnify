@@ -1,4 +1,3 @@
-import React from 'react';
 import { Center, VStack } from '@chakra-ui/react';
 import Hero from '../../components/Hero/Hero';
 

@@ -9,9 +9,12 @@ import {
   Center,
   VStack,
   Box,
+  Input,
+  Heading,
+  Divider,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
-import './exemptions.css';
-import './myLib.css';
 import { useState } from 'react';
 import CustomTable from '../../components/CustomTable/CustomTable';
 import Hero from '../../components/Hero/Hero';
@@ -28,6 +31,10 @@ function HouseRentAllowance() {
   let [bulkRows, setBulkRows] = useState([
     { id: 1, rowValues: ['', '', '', '', '', '', ''] },
   ]);
+  let [fromMonth, setFromMonth] = useState();
+  let [toMonth, setToMonth] = useState();
+  let [toMonthDisabled, setToMonthDisabled] = useState(1);
+
   let bulkColumns = [
     'Basic Salary',
     'DA Received',
@@ -52,10 +59,6 @@ function HouseRentAllowance() {
     { monthNumber: 11, monthName: 'February' },
     { monthNumber: 12, monthName: 'March' },
   ];
-
-  let [fromMonth, setFromMonth] = useState();
-  let [toMonth, setToMonth] = useState();
-  let [toMonthDisabled, setToMonthDisabled] = useState(1);
 
   function fromMonthClick(monthNumber) {
     if (monthNumber === '') {
@@ -322,14 +325,34 @@ function HouseRentAllowance() {
     }
   }
 
+  const clearAllValues = () => {
+    setBasicSalary(0);
+    setDaReceived(0);
+    setHraReceived(0);
+    setRentPaid(0);
+    setIsMetroCity(0);
+    setError(false);
+    sethasMultipleValues(0);
+    setColumns([]);
+    setRows([{}]);
+    setBulkRows([{ id: 1, rowValues: ['', '', '', '', '', '', ''] }]);
+    setFromMonth(undefined);
+    setToMonth(undefined);
+    setToMonthDisabled(1);
+  };
+
   return (
-    <VStack spacing={10} minH="100vh">
+    <VStack spacing={10} minH="100vh" p={5}>
       <Hero
         title="HRA Exemption Calculator"
         description="Calculate your House Rent Allowance (HRA) exemption easily. Understand how much of your HRA is exempt from tax and optimize your salary structure."
       />
-      <Box className="card" p={5} shadow="md" borderWidth="1px">
-        <Center>
+      <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" width="50%">
+        <Heading as="h3" size="lg" mb={5} textAlign="center">
+          Enter Details Here
+        </Heading>
+        <Divider mb={5} />
+        <Center mb={5}>
           <FormControl>
             <FormLabel>Do you have multiple values for year?</FormLabel>
             <RadioGroup defaultValue="0" onChange={setMultipleValueChanges}>
@@ -341,158 +364,75 @@ function HouseRentAllowance() {
           </FormControl>
         </Center>
         {hasMultipleValues != 0 ? (
-          <div>
-            <div className="row">
-              <div className="col-md-6">
-                <FormControl isRequired>
-                  <FormLabel>From Month</FormLabel>
-                  <Select
-                    value={fromMonth}
-                    onChange={(e) => fromMonthClick(e.target.value)}
-                    placeholder="Select From Month"
-                  >
-                    {months.map((month) => (
-                      <option key={month.monthNumber} value={month.monthNumber}>
-                        {month.monthName}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <FormControl isRequired>
-                  <FormLabel>To Month</FormLabel>
-                  <Select
-                    value={toMonth}
-                    onChange={(e) => toMonthClick(e.target.value)}
-                    placeholder="Select To Month"
-                    isDisabled={toMonthDisabled}
-                  >
-                    {months.map((month) => (
-                      <option key={month.monthNumber} value={month.monthNumber}>
-                        {month.monthName}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <FormControl isRequired>
-                  <FormLabel>Basic Salary Received</FormLabel>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={basicSalaryReceived}
-                    onChange={(e) => setBasicSalary(e.target.value)}
-                  />
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <FormControl>
-                  <FormLabel>DA Received</FormLabel>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={daReceived}
-                    onChange={(e) => setDaReceived(e.target.value)}
-                  />
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <FormControl isRequired>
-                  <FormLabel>HRA Received</FormLabel>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={hraReceived}
-                    onChange={(e) => setHraReceived(e.target.value)}
-                  />
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <FormControl isRequired>
-                  <FormLabel>Rent Paid</FormLabel>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={rentPaid}
-                    onChange={(e) => setRentPaid(e.target.value)}
-                  />
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <FormControl isRequired>
-                  <FormLabel>Metro City?</FormLabel>
-                  <RadioGroup defaultValue="0" onChange={setIsMetroCity}>
-                    <HStack spacing="24px">
-                      <Radio value="1">Yes</Radio>
-                      <Radio value="0">No</Radio>
-                    </HStack>
-                  </RadioGroup>
-                </FormControl>
-              </div>
-              <div className="col-md-6">
-                <Button onClick={addNewValueInTable} colorScheme="teal">
-                  Add
-                </Button>
-              </div>
-            </div>
-            <div className="row">
-              <CustomTable
-                columns={bulkColumns}
-                rows={bulkRows}
-                onEdit={onChangeEdit}
-                onDelete={onChangeDelete}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="row">
-            <div className="col-md-6">
+          <>
+            <HStack spacing={5} mb={5}>
+              <FormControl isRequired>
+                <FormLabel>From Month</FormLabel>
+                <Select
+                  value={fromMonth}
+                  onChange={(e) => fromMonthClick(e.target.value)}
+                  placeholder="Select From Month"
+                >
+                  {months.map((month) => (
+                    <option key={month.monthNumber} value={month.monthNumber}>
+                      {month.monthName}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>To Month</FormLabel>
+                <Select
+                  value={toMonth}
+                  onChange={(e) => toMonthClick(e.target.value)}
+                  placeholder="Select To Month"
+                  isDisabled={toMonthDisabled}
+                >
+                  {months.map((month) => (
+                    <option key={month.monthNumber} value={month.monthNumber}>
+                      {month.monthName}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+            </HStack>
+            <HStack spacing={5} mb={5}>
               <FormControl isRequired>
                 <FormLabel>Basic Salary Received</FormLabel>
-                <input
+                <Input
                   type="number"
-                  className="form-control"
                   value={basicSalaryReceived}
                   onChange={(e) => setBasicSalary(e.target.value)}
                 />
               </FormControl>
-            </div>
-            <div className="col-md-6">
               <FormControl>
                 <FormLabel>DA Received</FormLabel>
-                <input
+                <Input
                   type="number"
-                  className="form-control"
                   value={daReceived}
                   onChange={(e) => setDaReceived(e.target.value)}
                 />
               </FormControl>
-            </div>
-            <div className="col-md-6">
+            </HStack>
+            <HStack spacing={5} mb={5}>
               <FormControl isRequired>
                 <FormLabel>HRA Received</FormLabel>
-                <input
+                <Input
                   type="number"
-                  className="form-control"
                   value={hraReceived}
                   onChange={(e) => setHraReceived(e.target.value)}
                 />
               </FormControl>
-            </div>
-            <div className="col-md-6">
               <FormControl isRequired>
                 <FormLabel>Rent Paid</FormLabel>
-                <input
+                <Input
                   type="number"
-                  className="form-control"
                   value={rentPaid}
                   onChange={(e) => setRentPaid(e.target.value)}
                 />
               </FormControl>
-            </div>
-            <div className="col-md-6">
+            </HStack>
+            <HStack spacing={5} mb={5}>
               <FormControl isRequired>
                 <FormLabel>Metro City?</FormLabel>
                 <RadioGroup defaultValue="0" onChange={setIsMetroCity}>
@@ -502,20 +442,86 @@ function HouseRentAllowance() {
                   </HStack>
                 </RadioGroup>
               </FormControl>
-            </div>
-          </div>
+              <Button onClick={addNewValueInTable} colorScheme="teal" mt={8}>
+                Add
+              </Button>
+            </HStack>
+            <CustomTable
+              columns={bulkColumns}
+              rows={bulkRows}
+              onEdit={onChangeEdit}
+              onDelete={onChangeDelete}
+            />
+          </>
+        ) : (
+          <>
+            <HStack spacing={5} mb={5}>
+              <FormControl isRequired>
+                <FormLabel>Basic Salary Received</FormLabel>
+                <Input
+                  type="number"
+                  value={basicSalaryReceived}
+                  onChange={(e) => setBasicSalary(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>DA Received</FormLabel>
+                <Input
+                  type="number"
+                  value={daReceived}
+                  onChange={(e) => setDaReceived(e.target.value)}
+                />
+              </FormControl>
+            </HStack>
+            <HStack spacing={5} mb={5}>
+              <FormControl isRequired>
+                <FormLabel>HRA Received</FormLabel>
+                <Input
+                  type="number"
+                  value={hraReceived}
+                  onChange={(e) => setHraReceived(e.target.value)}
+                />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Rent Paid</FormLabel>
+                <Input
+                  type="number"
+                  value={rentPaid}
+                  onChange={(e) => setRentPaid(e.target.value)}
+                />
+              </FormControl>
+            </HStack>
+            <HStack spacing={5} mb={5}>
+              <FormControl isRequired>
+                <FormLabel>Metro City?</FormLabel>
+                <RadioGroup defaultValue="0" onChange={setIsMetroCity}>
+                  <HStack spacing="24px">
+                    <Radio value="1">Yes</Radio>
+                    <Radio value="0">No</Radio>
+                  </HStack>
+                </RadioGroup>
+              </FormControl>
+            </HStack>
+          </>
         )}
-        <Button
-          onClick={calculateButtonClicked}
-          colorScheme="teal"
-          marginTop="20px"
-        >
-          Calculate HRA Exemption
-        </Button>
+        <Center>
+          <Button
+            onClick={calculateButtonClicked}
+            colorScheme="teal"
+            mt={5}
+            mr={3}
+          >
+            Calculate HRA Exemption
+          </Button>
+          <Button onClick={clearAllValues} colorScheme="red" mt={5} ml={3}>
+            Clear Values
+          </Button>
+        </Center>
         {isError && (
-          <div className="alert alert-danger" role="alert">
+          <Alert status="error" mt={5}>
+            <AlertIcon />
             Please fill in all required fields correctly.
-          </div>
+          </Alert>
         )}
         <CustomTable columns={columns} rows={rows} />
       </Box>
