@@ -24,6 +24,9 @@ const LiveMutualFundsNav = () => {
 
   const handleStockSymbolChange = (event) => {
     setStockSymbol(event.target.value);
+    setLivePrice(null);
+    setYesterdayClose(null);
+    setGainLossPercentage(null);
   };
 
   const fetchStockData = async () => {
