@@ -28,10 +28,10 @@ const LiveMutualFundsNav = () => {
   const fetchStockData = async () => {
     try {
       const response = await axios.get(
-        `https://cors-anywhere.herokuapp.com/https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=5m&indicators=quote&includeTimestamps=true`
+        `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=5m&indicators=quote&includeTimestamps=true`)}`
       );
 
-      const chartData = response.data.chart.result[0];
+      const chartData = JSON.parse(response.data.contents).chart.result[0];
       const closes = chartData.indicators.quote[0].close;
 
       // Live price is the last available close
