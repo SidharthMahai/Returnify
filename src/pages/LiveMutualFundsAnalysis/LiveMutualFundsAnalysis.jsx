@@ -28,7 +28,7 @@ const LiveMutualFundsNav = () => {
   const fetchStockData = async () => {
     try {
       const response = await axios.get(
-        `https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=5m&indicators=quote&includeTimestamps=true`
+        `https://cors-anywhere.herokuapp.com/https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=5m&indicators=quote&includeTimestamps=true`
       );
 
       const chartData = response.data.chart.result[0];
@@ -75,7 +75,7 @@ const LiveMutualFundsNav = () => {
         <Button colorScheme="blue" onClick={handleButtonClick} mb={3}>
           Get KPIs
         </Button>
-        {/* <Divider mb={5} /> */}
+        <Divider mb={5} />
         {livePrice !== null &&
           yesterdayClose !== null &&
           gainLossPercentage !== null && (
