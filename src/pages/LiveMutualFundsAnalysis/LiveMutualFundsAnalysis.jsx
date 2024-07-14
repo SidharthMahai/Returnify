@@ -12,6 +12,7 @@ import {
   StatHelpText,
   Input,
   Button,
+  HStack,
 } from '@chakra-ui/react';
 import Hero from '../../components/Hero/Hero';
 
@@ -56,6 +57,13 @@ const LiveMutualFundsNav = () => {
     fetchStockData();
   };
 
+  const handleClearValues = () => {
+    setLivePrice(null);
+    setYesterdayClose(null);
+    setGainLossPercentage(null);
+    setStockSymbol('');
+  };
+
   return (
     <VStack spacing={10} minH="100vh" p={5}>
       <Hero
@@ -72,9 +80,18 @@ const LiveMutualFundsNav = () => {
           onChange={handleStockSymbolChange}
           mb={3}
         />
-        <Button colorScheme="blue" onClick={handleButtonClick} mb={3}>
-          Get KPIs
-        </Button>
+        <HStack spacing={3} mb={3}>
+          <Button colorScheme="blue" onClick={handleButtonClick}>
+            Get KPIs
+          </Button>
+          {livePrice !== null &&
+            yesterdayClose !== null &&
+            gainLossPercentage !== null && (
+              <Button colorScheme="red" onClick={handleClearValues}>
+                Clear Values
+              </Button>
+            )}
+        </HStack>
         <Divider mb={5} />
         {livePrice !== null &&
           yesterdayClose !== null &&
