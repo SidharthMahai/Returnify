@@ -30,11 +30,11 @@ const Header = () => {
             </Button>
           </Link>
           <Link
-            to="/live-mutual-funds-nav"
+            to="/live-mutual-funds-analysis"
             style={{ textDecoration: 'none', color: 'inherit' }}
           >
             <Button variant="ghost" color={color} mr={4}>
-              Live NAV
+              Live Mutual Funds Analysis
             </Button>
           </Link>
           <Link

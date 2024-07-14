@@ -11,10 +11,10 @@ const Home = () => (
     />
     <Center py={10} w="full">
       <SimpleGrid columns={[1, 1, 3]} spacing={10} maxW="90%">
-        <Link to="/live-mutual-funds-nav">
+        <Link to="/live-mutual-funds-analysis">
           <Card
-            title="Live Mutual Funds NAV"
-            description="Stay updated with the latest Net Asset Value (NAV) of your mutual funds in real-time. Monitor the performance of your investments & make informed decisions with up-to-date data."
+            title="Live Mutual Funds Analysis"
+            description="Monitor the real-time performance of the stocks in Mutual Funds, predicted live NAV of your mutual fund & make informed decisions."
           />
         </Link>
         <Link to="/hra-exemption">
