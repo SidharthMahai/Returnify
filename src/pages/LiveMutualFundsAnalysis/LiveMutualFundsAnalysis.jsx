@@ -106,7 +106,7 @@ const LiveMutualFundsNav = () => {
         title="Live Mutual Funds Analysis"
         description="Monitor the real-time performance of the stocks in Mutual Funds, predicted live NAV of your mutual fund & make informed decisions."
       />
-      <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" width="70%">
+      <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" width="50%">
         <Heading as="h3" size="lg" mb={5} textAlign="center">
           Enter Stock Symbol
         </Heading>
