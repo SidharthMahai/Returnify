@@ -5,7 +5,6 @@ import {
   Divider,
   Heading,
   VStack,
-  SimpleGrid,
   Stat,
   StatLabel,
   StatNumber,
@@ -16,6 +15,7 @@ import {
   Spinner,
   Alert,
   AlertIcon,
+  Text,
 } from '@chakra-ui/react';
 import Hero from '../../components/Hero/Hero';
 import { format } from 'date-fns';
@@ -27,7 +27,6 @@ const LiveMutualFundsNav = () => {
   const [gainLossPercentage, setGainLossPercentage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [exchangeName, setExchangeName] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const handleStockSymbolChange = (event) => {
@@ -36,7 +35,6 @@ const LiveMutualFundsNav = () => {
     setYesterdayClose(null);
     setGainLossPercentage(null);
     setError(null);
-    setExchangeName('');
     setLastUpdated(null);
   };
 
@@ -68,12 +66,9 @@ const LiveMutualFundsNav = () => {
       const gainLossPercent = (gainLoss / yesterdayCloseValue) * 100;
       setGainLossPercentage(gainLossPercent);
 
-      // Set exchange name
-      setExchangeName(meta.exchangeName);
-
       const lastTimestamp = new Date(timestamps[timestamps.length - 1] * 1000);
       const istTime = new Date(lastTimestamp.getTime());
-      setLastUpdated(format(istTime, 'EEEE, MMMM do yyyy, h:mm a'));
+      setLastUpdated(format(istTime, "EEEE, MMMM do yyyy, h:mm a"));
     } catch (error) {
       console.error('Error fetching stock data:', error);
       setError('Could not find a stock based on the input.');
@@ -92,7 +87,6 @@ const LiveMutualFundsNav = () => {
     setGainLossPercentage(null);
     setStockSymbol('');
     setError(null);
-    setExchangeName('');
     setLastUpdated(null);
   };
 
@@ -108,7 +102,7 @@ const LiveMutualFundsNav = () => {
         title="Live Mutual Funds Analysis"
         description="Monitor the real-time performance of the stocks in Mutual Funds, predicted live NAV of your mutual fund & make informed decisions."
       />
-      <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" width="50%">
+      <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" width="70%">
         <Heading as="h3" size="lg" mb={5} textAlign="center">
           Enter Stock Symbol
         </Heading>
@@ -152,40 +146,38 @@ const LiveMutualFundsNav = () => {
           livePrice !== null &&
           yesterdayClose !== null &&
           gainLossPercentage !== null && (
-            <>
-              <Heading as="h4" size="md" mb={3} textAlign="center">
-                {stockSymbol.toUpperCase()}
-                &nbsp;({exchangeName})
-              </Heading>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10}>
-                <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
+            <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" display="flex" alignItems="center">
+              <Box mr={5}>
+                <Text fontSize="2xl" fontWeight="bold">
+                  {stockSymbol.toUpperCase()}
+                </Text>
+              </Box>
+              <Divider orientation="vertical" height="50px" mr={5} />
+              <HStack spacing={10} flex="1" justifyContent="space-between">
+                <Stat>
                   <StatLabel>Live Price</StatLabel>
                   <StatNumber>{livePrice.toFixed(2)}</StatNumber>
                 </Stat>
-                <Stat p={5} shadow="md" borderWidth="1px" borderRadius="lg">
+                <Stat>
                   <StatLabel>{"Yesterday's Close"}</StatLabel>
                   <StatNumber>{yesterdayClose.toFixed(2)}</StatNumber>
                 </Stat>
-                <Stat
-                  p={5}
-                  color={gainLossPercentage >= 0 ? 'green' : 'red'}
-                  shadow="md"
-                  borderWidth="1px"
-                  borderRadius="lg"
-                >
+                <Stat color={gainLossPercentage >= 0 ? 'green.500' : 'red.500'}>
                   <StatLabel>Gain/Loss Percentage</StatLabel>
                   <StatNumber>{`${gainLossPercentage.toFixed(2)}%`}</StatNumber>
                   <StatHelpText>
                     {gainLossPercentage >= 0 ? 'Gain' : 'Loss'}
                   </StatHelpText>
                 </Stat>
-              </SimpleGrid>
-              <Alert status="info" mt={5}>
-                <AlertIcon />
-                Data last updated at: {lastUpdated} (IST)
-              </Alert>
-            </>
+              </HStack>
+            </Box>
           )}
+        {!loading && lastUpdated && (
+          <Alert status="info" mt={5} bg="gray.200">
+            <AlertIcon />
+            Data last updated at: {lastUpdated} (IST)
+          </Alert>
+        )}
       </Box>
     </VStack>
   );
