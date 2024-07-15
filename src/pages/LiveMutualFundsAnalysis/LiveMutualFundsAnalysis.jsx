@@ -173,7 +173,7 @@ const LiveMutualFundsNav = () => {
             </Box>
           )}
         {!loading && lastUpdated && (
-          <Alert status="info" mt={5} bg="gray.200">
+          <Alert status="info" mt={5}>
             <AlertIcon />
             Data last updated at: {lastUpdated} (IST)
           </Alert>
