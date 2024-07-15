@@ -53,21 +53,25 @@ const LiveMutualFundsNav = () => {
       const timestamps = chartData.timestamp;
       const meta = chartData.meta;
 
-      // Live price is the last available close
-      const livePriceValue = closes[closes.length - 1];
+      let livePriceValue = closes[closes.length - 1];
+      let lastTimestamp = timestamps[timestamps.length - 1];
+
+      // If live price is null, take the second last close and timestamp
+      if (livePriceValue === null) {
+        livePriceValue = closes[closes.length - 2];
+        lastTimestamp = timestamps[timestamps.length - 2];
+      }
+
       setLivePrice(livePriceValue);
 
-      // Yesterday's close from the meta object
       const yesterdayCloseValue = meta.previousClose;
       setYesterdayClose(yesterdayCloseValue);
 
-      // Calculate gain/loss percentage
       const gainLoss = livePriceValue - yesterdayCloseValue;
       const gainLossPercent = (gainLoss / yesterdayCloseValue) * 100;
       setGainLossPercentage(gainLossPercent);
 
-      const lastTimestamp = new Date(timestamps[timestamps.length - 1] * 1000);
-      const istTime = new Date(lastTimestamp.getTime());
+      const istTime = new Date(lastTimestamp * 1000);
       setLastUpdated(format(istTime, "EEEE, MMMM do yyyy, h:mm a"));
     } catch (error) {
       console.error('Error fetching stock data:', error);
