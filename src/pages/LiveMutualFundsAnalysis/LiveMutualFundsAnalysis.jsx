@@ -32,7 +32,7 @@ const LiveMutualFundsNav = () => {
   const fetchStockData = async () => {
     try {
       const response = await axios.get(
-        `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=5m&indicators=quote&includeTimestamps=true`)}`
+        `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=1m&indicators=quote&includeTimestamps=true`)}`
       );
 
       const chartData = JSON.parse(response.data.contents).chart.result[0];
