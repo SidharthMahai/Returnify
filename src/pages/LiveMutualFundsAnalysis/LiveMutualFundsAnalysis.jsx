@@ -17,7 +17,6 @@ import {
 } from '@chakra-ui/react';
 import { mutualFunds } from '../../constants/mutualfunds';
 import Hero from '../../components/Hero/Hero';
-import _ from 'lodash';
 
 const LiveMutualFund = () => {
   const [selectedFund, setSelectedFund] = useState('');
@@ -35,47 +34,44 @@ const LiveMutualFund = () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch mutual fund holdings
       const holdingsResponse = await axios.get(
         `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
-      const holdingsData = await Promise.all(
-        companyHoldingDetails.map(async (holding, index) => {
-          // Introduce a delay between requests
-          if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-          }
+      // Process each holding sequentially with a delay
+      for (let i = 0; i < companyHoldingDetails.length; i++) {
+        const holding = companyHoldingDetails[i];
 
-          // Fetch stock symbol
-          const symbolResponse = await axios.get(
-            `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
-          );
-          const { nseScriptCode } = symbolResponse.data.header;
+        if (i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
+        }
 
-          if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-          }
+        const symbolResponse = await axios.get(
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+        );
+        const { nseScriptCode } = symbolResponse.data.header;
 
-          // Fetch latest price
-          const priceResponse = await axios.get(
-            `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
-          );
-          const { ltp, dayChange, dayChangePerc } = priceResponse.data;
+        if (i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
+        }
 
-          return {
-            name: holding.company_name,
-            percentage: holding.corpus_per,
-            livePrice: ltp,
-            previousClose: ltp - dayChange,
-            dayChange,
-            dayChangePerc,
-          };
-        })
-      );
+        const priceResponse = await axios.get(
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
+        );
+        const { ltp, dayChange, dayChangePerc } = priceResponse.data;
 
-      setHoldings(holdingsData.sort((a, b) => b.percentage - a.percentage));
+        const holdingData = {
+          name: holding.company_name,
+          percentage: holding.corpus_per,
+          livePrice: ltp,
+          previousClose: ltp - dayChange,
+          dayChange,
+          dayChangePerc,
+        };
+
+        setHoldings((prevHoldings) => [...prevHoldings, holdingData]);
+      }
     } catch (error) {
       setError('Failed to fetch data');
     } finally {
@@ -84,7 +80,9 @@ const LiveMutualFund = () => {
   };
 
   useEffect(() => {
-    if (selectedFund != '') fetchHoldings();
+    if (selectedFund) {
+      fetchHoldings();
+    }
   }, [selectedFund]);
 
   return (
@@ -97,9 +95,9 @@ const LiveMutualFund = () => {
         value={selectedFund}
         onChange={handleFundChange}
         placeholder="Select Mutual Fund"
-        width="400px" // Adjust the width as needed
+        width="400px"
       >
-        {_.sortBy(mutualFunds, ['name'], ['desc']).map((fund) => (
+        {mutualFunds.map((fund) => (
           <option key={fund.key} value={fund.key}>
             {fund.name}
           </option>
