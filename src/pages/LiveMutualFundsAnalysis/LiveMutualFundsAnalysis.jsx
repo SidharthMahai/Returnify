@@ -17,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { mutualFunds } from '../../constants/mutualfunds';
 import Hero from '../../components/Hero/Hero';
+import _ from 'lodash';
 
 const LiveMutualFund = () => {
   const [selectedFund, setSelectedFund] = useState('');
@@ -34,6 +35,7 @@ const LiveMutualFund = () => {
     setLoading(true);
     setError(null);
     try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       // Fetch mutual fund holdings
       const holdingsResponse = await axios.get(
         `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
@@ -44,7 +46,7 @@ const LiveMutualFund = () => {
         companyHoldingDetails.map(async (holding, index) => {
           // Introduce a delay between requests
           if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
           }
 
           // Fetch stock symbol
@@ -54,7 +56,7 @@ const LiveMutualFund = () => {
           const { nseScriptCode } = symbolResponse.data.header;
 
           if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
           }
 
           // Fetch latest price
@@ -98,7 +100,7 @@ const LiveMutualFund = () => {
         placeholder="Select Mutual Fund"
         width="400px" // Adjust the width as needed
       >
-        {mutualFunds.map((fund) => (
+        {_.sortBy(mutualFunds, ['name'], ['desc']).map((fund) => (
           <option key={fund.key} value={fund.key}>
             {fund.name}
           </option>
