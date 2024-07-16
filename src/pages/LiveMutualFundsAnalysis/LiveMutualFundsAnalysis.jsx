@@ -34,40 +34,47 @@ const LiveMutualFund = () => {
     setLoading(true);
     setError(null);
     try {
-      if (selectedFund) {
-        // Fetch mutual fund holdings
-        const holdingsResponse = await axios.get(
-          `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
-        );
-        const companyHoldingDetails = holdingsResponse.data.holdings;
+      // Fetch mutual fund holdings
+      const holdingsResponse = await axios.get(
+        `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
+      );
+      const companyHoldingDetails = holdingsResponse.data.holdings;
 
-        const holdingsData = await Promise.all(
-          companyHoldingDetails.map(async (holding) => {
-            // Fetch stock symbol
-            const symbolResponse = await axios.get(
-              `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
-            );
-            const { nseScriptCode } = symbolResponse.data.header;
+      const holdingsData = await Promise.all(
+        companyHoldingDetails.map(async (holding, index) => {
+          // Introduce a delay between requests
+          if (index > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
 
-            // Fetch latest price
-            const priceResponse = await axios.get(
-              `https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
-            );
-            const { ltp, dayChange, dayChangePerc } = priceResponse.data;
+          // Fetch stock symbol
+          const symbolResponse = await axios.get(
+            `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+          );
+          const { nseScriptCode } = symbolResponse.data.header;
 
-            return {
-              name: holding.company_name,
-              percentage: holding.corpus_per,
-              livePrice: ltp,
-              previousClose: ltp - dayChange,
-              dayChange,
-              dayChangePerc,
-            };
-          })
-        );
+          if (index > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
 
-        setHoldings(holdingsData.sort((a, b) => b.percentage - a.percentage));
-      }
+          // Fetch latest price
+          const priceResponse = await axios.get(
+            `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
+          );
+          const { ltp, dayChange, dayChangePerc } = priceResponse.data;
+
+          return {
+            name: holding.company_name,
+            percentage: holding.corpus_per,
+            livePrice: ltp,
+            previousClose: ltp - dayChange,
+            dayChange,
+            dayChangePerc,
+          };
+        })
+      );
+
+      setHoldings(holdingsData.sort((a, b) => b.percentage - a.percentage));
     } catch (error) {
       setError('Failed to fetch data');
     } finally {
@@ -76,11 +83,11 @@ const LiveMutualFund = () => {
   };
 
   useEffect(() => {
-    fetchHoldings();
+    if (selectedFund != '') fetchHoldings();
   }, [selectedFund]);
 
   return (
-    <VStack spacing={8} p={5}>
+    <VStack spacing={10} minH="100vh" p={5}>
       <Hero
         title="Live Mutual Funds Analysis"
         description="Monitor the real-time performance of the stocks in Mutual Funds, predicted live NAV of your mutual fund & make informed decisions."
