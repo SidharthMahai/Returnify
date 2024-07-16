@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Box,
@@ -9,182 +9,138 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  Input,
-  Button,
-  HStack,
   Spinner,
   Alert,
   AlertIcon,
-  Text,
+  Select,
+  HStack,
 } from '@chakra-ui/react';
+import { mutualFunds } from '../../constants/mutualfunds';
 import Hero from '../../components/Hero/Hero';
-import { format } from 'date-fns';
 
-const LiveMutualFundsNav = () => {
-  const [stockSymbol, setStockSymbol] = useState('');
-  const [livePrice, setLivePrice] = useState(null);
-  const [yesterdayClose, setYesterdayClose] = useState(null);
-  const [gainLossPercentage, setGainLossPercentage] = useState(null);
+const LiveMutualFund = () => {
+  const [selectedFund, setSelectedFund] = useState('');
+  const [holdings, setHoldings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const handleStockSymbolChange = (event) => {
-    setStockSymbol(event.target.value);
-    setLivePrice(null);
-    setYesterdayClose(null);
-    setGainLossPercentage(null);
+  const handleFundChange = (event) => {
+    setSelectedFund(event.target.value);
+    setHoldings([]);
     setError(null);
-    setLastUpdated(null);
   };
 
-  const fetchStockData = async () => {
+  const fetchHoldings = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(
-        `https://api.allorigins.win/get?url=${encodeURIComponent(
-          `https://query1.finance.yahoo.com/v7/finance/chart/${stockSymbol}.BO?range=1d&interval=1m&indicators=quote&includeTimestamps=true`
-        )}`
-      );
+      if (selectedFund) {
+        // Fetch mutual fund holdings
+        const holdingsResponse = await axios.get(
+          `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
+        );
+        const companyHoldingDetails = holdingsResponse.data.holdings;
 
-      const chartData = JSON.parse(response.data.contents).chart.result[0];
-      const closes = chartData.indicators.quote[0].close;
-      const timestamps = chartData.timestamp;
-      const meta = chartData.meta;
+        const holdingsData = await Promise.all(
+          companyHoldingDetails.map(async (holding) => {
+            // Fetch stock symbol
+            const symbolResponse = await axios.get(
+              `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+            );
+            const { nseScriptCode } = symbolResponse.data.header;
 
-      let livePriceValue = closes[closes.length - 1];
-      let lastTimestamp = timestamps[timestamps.length - 1];
+            // Fetch latest price
+            const priceResponse = await axios.get(
+              `https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
+            );
+            const { ltp, dayChange, dayChangePerc } = priceResponse.data;
 
-      // If live price is null, take the second last close and timestamp
-      if (livePriceValue === null) {
-        livePriceValue = closes[closes.length - 2];
-        lastTimestamp = timestamps[timestamps.length - 2];
+            return {
+              name: holding.company_name,
+              percentage: holding.corpus_per,
+              livePrice: ltp,
+              previousClose: ltp - dayChange,
+              dayChange,
+              dayChangePerc,
+            };
+          })
+        );
+
+        setHoldings(holdingsData.sort((a, b) => b.percentage - a.percentage));
       }
-
-      setLivePrice(livePriceValue);
-
-      const yesterdayCloseValue = meta.previousClose;
-      setYesterdayClose(yesterdayCloseValue);
-
-      const gainLoss = livePriceValue - yesterdayCloseValue;
-      const gainLossPercent = (gainLoss / yesterdayCloseValue) * 100;
-      setGainLossPercentage(gainLossPercent);
-
-      const istTime = new Date(lastTimestamp * 1000);
-      setLastUpdated(format(istTime, "EEEE, MMMM do yyyy, h:mm a"));
     } catch (error) {
-      console.error('Error fetching stock data:', error);
-      setError('Could not find a stock based on the input.');
+      setError('Failed to fetch data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleButtonClick = () => {
-    fetchStockData();
-  };
-
-  const handleClearValues = () => {
-    setLivePrice(null);
-    setYesterdayClose(null);
-    setGainLossPercentage(null);
-    setStockSymbol('');
-    setError(null);
-    setLastUpdated(null);
-  };
-
-  const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
-      fetchStockData();
-    }
-  };
+  useEffect(() => {
+    fetchHoldings();
+  }, [selectedFund]);
 
   return (
-    <VStack spacing={10} minH="100vh" p={5}>
+    <VStack spacing={8} p={5}>
       <Hero
         title="Live Mutual Funds Analysis"
         description="Monitor the real-time performance of the stocks in Mutual Funds, predicted live NAV of your mutual fund & make informed decisions."
       />
-      <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" width="50%">
-        <Heading as="h3" size="lg" mb={5} textAlign="center">
-          Enter Stock Symbol
-        </Heading>
-        <Input
-          placeholder="Enter Stock Symbol (e.g., HAL)"
-          value={stockSymbol.toUpperCase()}
-          onChange={handleStockSymbolChange}
-          onKeyPress={handleKeyPress}
-          mb={3}
-        />
-        <HStack spacing={3} mb={3}>
-          <Button colorScheme="blue" onClick={handleButtonClick}>
-            Get KPIs
-          </Button>
-          {livePrice !== null &&
-            yesterdayClose !== null &&
-            gainLossPercentage !== null && (
-              <>
-                <Button colorScheme="teal" onClick={fetchStockData}>
-                  Fetch Latest Value
-                </Button>
-                <Button colorScheme="red" onClick={handleClearValues}>
-                  Clear Values
-                </Button>
-              </>
-            )}
-        </HStack>
-        <Divider mb={5} />
-        {loading && (
-          <Box textAlign="center" my={5}>
-            <Spinner size="xl" />
-          </Box>
-        )}
-        {error && (
-          <Alert status="error" mt={5}>
-            <AlertIcon />
-            Unable to find any values for Stock: {stockSymbol}
-          </Alert>
-        )}
-        {!loading &&
-          livePrice !== null &&
-          yesterdayClose !== null &&
-          gainLossPercentage !== null && (
-            <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" display="flex" alignItems="center">
-              <Box mr={5}>
-                <Text fontSize="2xl" fontWeight="bold">
-                  {stockSymbol.toUpperCase()}
-                </Text>
-              </Box>
-              <Divider orientation="vertical" height="50px" mr={5} />
-              <HStack spacing={10} flex="1" justifyContent="space-between">
-                <Stat>
-                  <StatLabel>Live Price</StatLabel>
-                  <StatNumber>{livePrice.toFixed(2)}</StatNumber>
-                </Stat>
-                <Stat>
-                  <StatLabel>{"Yesterday's Close"}</StatLabel>
-                  <StatNumber>{yesterdayClose.toFixed(2)}</StatNumber>
-                </Stat>
-                <Stat color={gainLossPercentage >= 0 ? 'green.500' : 'red.500'}>
-                  <StatLabel>Gain/Loss Percentage</StatLabel>
-                  <StatNumber>{`${gainLossPercentage.toFixed(2)}%`}</StatNumber>
-                  <StatHelpText>
-                    {gainLossPercentage >= 0 ? 'Gain' : 'Loss'}
-                  </StatHelpText>
-                </Stat>
-              </HStack>
-            </Box>
-          )}
-        {!loading && lastUpdated && (
-          <Alert status="info" mt={5}>
-            <AlertIcon />
-            Data last updated at: {lastUpdated} (IST)
-          </Alert>
-        )}
-      </Box>
+      <Select
+        value={selectedFund}
+        onChange={handleFundChange}
+        placeholder="Select Mutual Fund"
+        width="400px" // Adjust the width as needed
+      >
+        {mutualFunds.map((fund) => (
+          <option key={fund.key} value={fund.key}>
+            {fund.name}
+          </option>
+        ))}
+      </Select>
+      {holdings.map((holding) => (
+        <Box key={holding.name} p={5} shadow="md" borderWidth="1px" width="60%">
+          <Heading fontSize="xl">{holding.name}</Heading>
+          <Divider my={2} />
+          <HStack spacing={10} justifyContent="space-between">
+            <Stat>
+              <StatLabel>Live Price</StatLabel>
+              <StatNumber>{holding.livePrice.toFixed(2)}</StatNumber>
+            </Stat>
+            <Divider orientation="vertical" height="50px" />
+            <Stat>
+              <StatLabel>{"Yesterday's Close"}</StatLabel>
+              <StatNumber>{holding.previousClose.toFixed(2)}</StatNumber>
+            </Stat>
+            <Divider orientation="vertical" height="50px" />
+            <Stat color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}>
+              <StatLabel>Day Change</StatLabel>
+              <StatNumber>{holding.dayChange.toFixed(2)}</StatNumber>
+            </Stat>
+            <Divider orientation="vertical" height="50px" />
+            <Stat color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}>
+              <StatLabel>Day Change Percentage</StatLabel>
+              <StatNumber>{`${holding.dayChangePerc.toFixed(2)}%`}</StatNumber>
+              <StatHelpText>
+                {holding.dayChangePerc >= 0 ? 'Gain' : 'Loss'}
+              </StatHelpText>
+            </Stat>
+            <Divider orientation="vertical" height="50px" />
+            <Stat>
+              <StatLabel>Percentage Holdings</StatLabel>
+              <StatNumber>{`${holding.percentage.toFixed(2)}%`}</StatNumber>
+            </Stat>
+          </HStack>
+        </Box>
+      ))}
+      {loading && <Spinner size="xl" />}
+      {error && (
+        <Alert status="error">
+          <AlertIcon />
+          {error}
+        </Alert>
+      )}
     </VStack>
   );
 };
 
-export default LiveMutualFundsNav;
+export default LiveMutualFund;
