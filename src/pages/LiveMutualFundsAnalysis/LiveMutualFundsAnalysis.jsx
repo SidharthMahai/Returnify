@@ -35,7 +35,6 @@ const LiveMutualFund = () => {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       // Fetch mutual fund holdings
       const holdingsResponse = await axios.get(
         `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
@@ -46,7 +45,7 @@ const LiveMutualFund = () => {
         companyHoldingDetails.map(async (holding, index) => {
           // Introduce a delay between requests
           if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
           }
 
           // Fetch stock symbol
@@ -56,7 +55,7 @@ const LiveMutualFund = () => {
           const { nseScriptCode } = symbolResponse.data.header;
 
           if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
           }
 
           // Fetch latest price
