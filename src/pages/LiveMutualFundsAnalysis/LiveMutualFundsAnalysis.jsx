@@ -39,7 +39,7 @@ const LiveMutualFund = () => {
     setProgress(0);
     try {
       const holdingsResponse = await axios.get(
-        `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${encodeURIComponent(selectedFund)}`
+        `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
@@ -52,7 +52,7 @@ const LiveMutualFund = () => {
         }
 
         const symbolResponse = await axios.get(
-          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${encodeURIComponent(holding.stock_search_id)}`
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/$holding.stock_search_id}`
         );
         const { nseScriptCode } = symbolResponse.data.header;
 
@@ -61,7 +61,7 @@ const LiveMutualFund = () => {
         }
 
         const priceResponse = await axios.get(
-          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${encodeURIComponent(nseScriptCode)}`
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
         );
         const { ltp, dayChange, dayChangePerc } = priceResponse.data;
 
@@ -103,8 +103,8 @@ const LiveMutualFund = () => {
         placeholder="Select Mutual Fund"
         width="400px"
       >
-        {_.sortBy(mutualFunds, ['name'], ['desc']).map((fund) => (
-          <option key={fund.growwKey} value={fund.growwKey}>
+        {_.sortBy(mutualFunds, ['key'], ['desc']).map((fund) => (
+          <option key={fund.key} value={fund.key}>
             {fund.name}
           </option>
         ))}
