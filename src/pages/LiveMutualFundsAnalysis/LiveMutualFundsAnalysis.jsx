@@ -14,20 +14,24 @@ import {
   AlertIcon,
   Select,
   HStack,
+  Progress,
 } from '@chakra-ui/react';
 import { mutualFunds } from '../../constants/mutualfunds';
 import Hero from '../../components/Hero/Hero';
+import _ from 'lodash';
 
 const LiveMutualFund = () => {
   const [selectedFund, setSelectedFund] = useState('');
   const [holdings, setHoldings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
 
   const handleFundChange = (event) => {
     setSelectedFund(event.target.value);
     setHoldings([]);
     setError(null);
+    setProgress(0);
   };
 
   const fetchHoldings = async () => {
@@ -44,7 +48,7 @@ const LiveMutualFund = () => {
         const holding = companyHoldingDetails[i];
 
         if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
+          await new Promise((resolve) => setTimeout(resolve, 500)); // Adjust delay as needed (e.g., 2 seconds)
         }
 
         const symbolResponse = await axios.get(
@@ -53,7 +57,7 @@ const LiveMutualFund = () => {
         const { nseScriptCode } = symbolResponse.data.header;
 
         if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
+          await new Promise((resolve) => setTimeout(resolve, 500)); // Adjust delay as needed (e.g., 2 seconds)
         }
 
         const priceResponse = await axios.get(
@@ -71,6 +75,7 @@ const LiveMutualFund = () => {
         };
 
         setHoldings((prevHoldings) => [...prevHoldings, holdingData]);
+        setProgress(((i + 1) / companyHoldingDetails.length) * 100); // Update progress
       }
     } catch (error) {
       setError('Failed to fetch data');
@@ -83,6 +88,7 @@ const LiveMutualFund = () => {
     if (selectedFund) {
       fetchHoldings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFund]);
 
   return (
@@ -97,13 +103,16 @@ const LiveMutualFund = () => {
         placeholder="Select Mutual Fund"
         width="400px"
       >
-        {mutualFunds.map((fund) => (
-          <option key={fund.key} value={fund.key}>
+        {_.sortBy(mutualFunds, ['name'], ['desc']).map((fund) => (
+          <option key={fund.growwKey} value={fund.growwKey}>
             {fund.name}
           </option>
         ))}
       </Select>
-      {holdings.map((holding) => (
+      {loading && (
+        <Progress value={progress} size="lg" width="60%" colorScheme="teal" />
+      )}
+      {holdings.length > 0 && !loading && holdings.map((holding) => (
         <Box key={holding.name} p={5} shadow="md" borderWidth="1px" width="60%">
           <Heading fontSize="xl">{holding.name}</Heading>
           <Divider my={2} />
@@ -138,7 +147,6 @@ const LiveMutualFund = () => {
           </HStack>
         </Box>
       ))}
-      {loading && <Spinner size="xl" />}
       {error && (
         <Alert status="error">
           <AlertIcon />
