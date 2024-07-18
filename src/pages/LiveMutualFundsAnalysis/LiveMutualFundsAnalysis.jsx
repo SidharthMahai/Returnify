@@ -9,12 +9,11 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  Spinner,
+  Progress,
   Alert,
   AlertIcon,
   Select,
   HStack,
-  Progress,
 } from '@chakra-ui/react';
 import { mutualFunds } from '../../constants/mutualfunds';
 import Hero from '../../components/Hero/Hero';
@@ -43,7 +42,6 @@ const LiveMutualFund = () => {
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
-      // Process each holding sequentially with a delay
       for (let i = 0; i < companyHoldingDetails.length; i++) {
         const holding = companyHoldingDetails[i];
 
@@ -78,7 +76,9 @@ const LiveMutualFund = () => {
         setProgress(((i + 1) / companyHoldingDetails.length) * 100); // Update progress
       }
     } catch (error) {
+      console.error('Error fetching data:', error);
       setError('Failed to fetch data');
+      setProgress(0); // Reset progress on error
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,6 @@ const LiveMutualFund = () => {
     if (selectedFund) {
       fetchHoldings();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFund]);
 
   return (
