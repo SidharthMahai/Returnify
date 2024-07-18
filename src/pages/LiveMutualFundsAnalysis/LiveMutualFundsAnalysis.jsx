@@ -36,30 +36,32 @@ const LiveMutualFund = () => {
   const fetchHoldings = async () => {
     setLoading(true);
     setError(null);
+    setProgress(0);
     try {
       const holdingsResponse = await axios.get(
-        `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
+        `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${encodeURIComponent(selectedFund)}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
+      // Process each holding sequentially with a delay
       for (let i = 0; i < companyHoldingDetails.length; i++) {
         const holding = companyHoldingDetails[i];
 
         if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 3000)); // Adjust delay as needed (e.g., 2 seconds)
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
         }
 
         const symbolResponse = await axios.get(
-          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${encodeURIComponent(holding.stock_search_id)}`
         );
         const { nseScriptCode } = symbolResponse.data.header;
 
         if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 3000)); // Adjust delay as needed (e.g., 2 seconds)
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
         }
 
         const priceResponse = await axios.get(
-          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${nseScriptCode}`
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/NSE/segment/CASH/latest_prices_ohlc/${encodeURIComponent(nseScriptCode)}`
         );
         const { ltp, dayChange, dayChangePerc } = priceResponse.data;
 
@@ -76,9 +78,7 @@ const LiveMutualFund = () => {
         setProgress(((i + 1) / companyHoldingDetails.length) * 100); // Update progress
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
       setError('Failed to fetch data');
-      setProgress(0); // Reset progress on error
     } finally {
       setLoading(false);
     }
@@ -88,6 +88,7 @@ const LiveMutualFund = () => {
     if (selectedFund) {
       fetchHoldings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFund]);
 
   return (
