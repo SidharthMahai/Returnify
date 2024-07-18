@@ -48,7 +48,7 @@ const LiveMutualFund = () => {
         const holding = companyHoldingDetails[i];
 
         if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
         }
 
         const symbolResponse = await axios.get(
@@ -57,7 +57,7 @@ const LiveMutualFund = () => {
         const { nseScriptCode } = symbolResponse.data.header;
 
         if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Adjust delay as needed (e.g., 2 seconds)
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
         }
 
         const priceResponse = await axios.get(
