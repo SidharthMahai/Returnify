@@ -52,7 +52,7 @@ const LiveMutualFund = () => {
         }
 
         const symbolResponse = await axios.get(
-          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/$holding.stock_search_id}`
+          `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
         );
         const { nseScriptCode } = symbolResponse.data.header;
 
