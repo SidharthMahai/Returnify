@@ -199,7 +199,7 @@ const LiveMutualFund = () => {
               <StatNumber
                 color={overallGainLoss >= 0 ? 'green.500' : 'red.500'}
               >
-                {overallGainLoss ? `${overallGainLoss.toFixed(2)}%` : 'N/A'}
+                {overallGainLoss ? `${overallGainLoss?.toFixed(2)}%` : 'N/A'}
               </StatNumber>
               <StatHelpText>
                 {overallGainLoss >= 0 ? 'Gain' : 'Loss'}
@@ -242,19 +242,19 @@ const LiveMutualFund = () => {
             <HStack spacing={10} justifyContent="space-between">
               <Stat>
                 <StatLabel>Live Price</StatLabel>
-                <StatNumber>{holding.livePrice.toFixed(2)}</StatNumber>
+                <StatNumber>{holding.livePrice?.toFixed(2)}</StatNumber>
               </Stat>
               <Divider orientation="vertical" height="50px" />
               <Stat>
                 <StatLabel>{"Yesterday's Close"}</StatLabel>
-                <StatNumber>{holding.previousClose.toFixed(2)}</StatNumber>
+                <StatNumber>{holding.previousClose?.toFixed(2)}</StatNumber>
               </Stat>
               <Divider orientation="vertical" height="50px" />
               <Stat
                 color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
               >
                 <StatLabel>Day Change</StatLabel>
-                <StatNumber>{holding.dayChange.toFixed(2)}</StatNumber>
+                <StatNumber>{holding.dayChange?.toFixed(2)}</StatNumber>
               </Stat>
               <Divider orientation="vertical" height="50px" />
               <Stat
@@ -271,7 +271,7 @@ const LiveMutualFund = () => {
               <Divider orientation="vertical" height="50px" />
               <Stat>
                 <StatLabel>Percentage Holdings</StatLabel>
-                <StatNumber>{`${holding.percentage.toFixed(2)}%`}</StatNumber>
+                <StatNumber>{`${holding.percentage?.toFixed(2)}%`}</StatNumber>
               </Stat>
             </HStack>
           </Box>
