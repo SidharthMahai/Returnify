@@ -261,7 +261,7 @@ const LiveMutualFund = () => {
                 color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
               >
                 <StatLabel>Day Change Percentage</StatLabel>
-                <StatNumber>{`${holding.dayChangePerc.toFixed(
+                <StatNumber>{`${holding.dayChangePerc?.toFixed(
                   2
                 )}%`}</StatNumber>
                 <StatHelpText>
