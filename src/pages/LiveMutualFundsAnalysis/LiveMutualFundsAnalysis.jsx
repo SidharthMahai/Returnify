@@ -296,7 +296,7 @@ const LiveMutualFund = () => {
         ))}
       </Select>
 
-      {selectedFund === 'SelectAll' ? (
+      {!loading && selectedFund === 'SelectAll' ? (
         <VStack spacing={4}>
           {allMutualFundData.map((fundData) => (
             <Box
@@ -342,14 +342,14 @@ const LiveMutualFund = () => {
             </Box>
           ))}
         </VStack>
-      ) : selectedFund != '' ? (
+      ) : !loading && selectedFund != '' ? (
         <VStack spacing={4}>
           <Box p={5} shadow="md" borderWidth="1px" width="100%">
-            <Heading fontSize="xl">Summary</Heading>
+            <Heading fontSize="xl">Live Analysis Summary</Heading>
             <Divider my={2} />
             <HStack spacing={10} justifyContent="space-between">
               <Stat>
-                <StatLabel>Overall Gain/Loss</StatLabel>
+                <StatLabel>Live Gain/Loss %</StatLabel>
                 <StatNumber
                   color={overallGainLoss >= 0 ? 'green.500' : 'red.500'}
                 >
@@ -387,7 +387,7 @@ const LiveMutualFund = () => {
               p={5}
               shadow="md"
               borderWidth="1px"
-              width="60%"
+              width="100%"
             >
               <Heading fontSize="xl">{holding.name}</Heading>
               <Divider my={2} />
@@ -412,7 +412,7 @@ const LiveMutualFund = () => {
                 <Stat
                   color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
                 >
-                  <StatLabel>Day Change Percentage</StatLabel>
+                  <StatLabel>Day Change %</StatLabel>
                   <StatNumber>{`${holding.dayChangePerc?.toFixed(
                     2
                   )}%`}</StatNumber>
@@ -434,7 +434,9 @@ const LiveMutualFund = () => {
       ) : (
         ''
       )}
-      {loading && <Progress size="xs" isIndeterminate value={progress} />}
+      {loading && selectedFund != '' && (
+        <Progress size="lg" colorScheme="teal" width="60%" value={progress} />
+      )}
       {error && (
         <Alert status="error" mt={4}>
           <AlertIcon />
