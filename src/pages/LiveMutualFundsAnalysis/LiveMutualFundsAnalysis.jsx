@@ -33,9 +33,18 @@ const LiveMutualFund = () => {
   });
   const [overallGainLoss, setOverallGainLoss] = useState(null);
   const [recommendation, setRecommendation] = useState('N/A');
+  const [allMutualFundData, setAllMutualFundData] = useState([]);
+  const [cachedData, setCachedData] = useState({});
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const corsParam = urlParams.get('cors');
+    setCorsOff(corsParam === 'off');
+  }, []);
 
   const handleFundChange = (event) => {
-    setSelectedFund(event.target.value);
+    const selected = event.target.value;
+    setSelectedFund(selected);
     setHoldings([]);
     setError(null);
     setProgress(0);
@@ -46,17 +55,22 @@ const LiveMutualFund = () => {
     });
     setOverallGainLoss(null);
     setRecommendation('N/A');
+    if (selected === 'SelectAll') {
+      fetchAllMutualFunds();
+    } else {
+      fetchHoldings(selected);
+    }
   };
 
-  const fetchHoldings = async () => {
+  const fetchHoldings = async (fundKey) => {
     setLoading(true);
     setError(null);
     setProgress(0);
     try {
       const holdingsResponse = await axios.get(
         corsOff
-          ? `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
-          : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${selectedFund}`
+          ? `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${fundKey}`
+          : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${fundKey}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
@@ -83,7 +97,6 @@ const LiveMutualFund = () => {
           );
           const { bseScriptCode } = symbolResponse.data.header;
 
-          // Append bseScriptCode to each holding object
           holding.bseScriptCode = bseScriptCode;
           symbols.push(bseScriptCode);
 
@@ -151,6 +164,15 @@ const LiveMutualFund = () => {
       // Determine recommendation
       const lossThreshold = -1; // Ideal percentage to suggest buying more
       setRecommendation(weightedGainLossSum < lossThreshold ? 'Yes' : 'No');
+
+      // Update cached data
+      setCachedData((prevData) => ({
+        ...prevData,
+        [fundKey]: {
+          key: fundKey,
+          weightedGainLossSum,
+        },
+      }));
     } catch (error) {
       setError('Failed to fetch data');
     } finally {
@@ -158,15 +180,99 @@ const LiveMutualFund = () => {
     }
   };
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    setCorsOff(urlParams.has('cors') && urlParams.get('cors') === 'off');
+  const fetchAllMutualFunds = async () => {
+    setLoading(true);
+    setError(null);
+    setProgress(0);
 
-    if (selectedFund) {
-      fetchHoldings();
+    const mutualFundKeys = mutualFunds.map((fund) => fund.key);
+    let allData = [];
+
+    for (const key of mutualFundKeys) {
+      if (!cachedData[key]) {
+        try {
+          const response = await axios.get(
+            corsOff
+              ? `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${key}`
+              : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${key}`
+          );
+          const companyHoldingDetails = response.data.holdings;
+
+          const totalHoldings = companyHoldingDetails.length;
+          let weightedGainLossSum = 0;
+
+          for (let i = 0; i < totalHoldings; i++) {
+            const holding = companyHoldingDetails[i];
+
+            if (holding.stock_search_id) {
+              if (!corsOff && i > 0) {
+                await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
+              }
+
+              const symbolResponse = await axios.get(
+                corsOff
+                  ? `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+                  : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+              );
+              const { bseScriptCode } = symbolResponse.data.header;
+
+              holding.bseScriptCode = bseScriptCode;
+
+              if (!corsOff && i > 0) {
+                await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
+              }
+            }
+
+            const priceResponse = await axios.post(
+              corsOff
+                ? 'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated'
+                : 'https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
+              {
+                exchangeAggReqMap: {
+                  NSE: {
+                    priceSymbolList: [],
+                    indexSymbolList: [],
+                  },
+                  BSE: {
+                    priceSymbolList: [holding.bseScriptCode],
+                    indexSymbolList: [],
+                  },
+                },
+              }
+            );
+
+            const priceData =
+              priceResponse.data.exchangeAggRespMap.BSE.priceLivePointsMap;
+
+            const priceInfo = holding.bseScriptCode
+              ? priceData[holding.bseScriptCode]
+              : null;
+
+            if (priceInfo) {
+              const holdingWeight = holding.corpus_per / 100;
+              weightedGainLossSum += holdingWeight * priceInfo.dayChangePerc;
+            }
+
+            setProgress(((allData.length + 1) / mutualFundKeys.length) * 100);
+          }
+
+          allData.push({
+            key,
+            weightedGainLossSum,
+          });
+        } catch (error) {
+          setError('Failed to fetch data');
+        } finally {
+          setProgress((allData.length / mutualFundKeys.length) * 100);
+        }
+      } else {
+        allData.push(cachedData[key]);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFund]);
+
+    setAllMutualFundData(allData);
+    setLoading(false);
+  };
 
   return (
     <VStack spacing={10} minH="100vh" p={5}>
@@ -180,104 +286,157 @@ const LiveMutualFund = () => {
         placeholder="Select Mutual Fund"
         width="400px"
       >
+        <option key="SelectAll" value="SelectAll">
+          Select All Funds
+        </option>
         {_.sortBy(mutualFunds, ['key'], ['desc']).map((fund) => (
           <option key={fund.key} value={fund.key}>
             {fund.name}
           </option>
         ))}
       </Select>
-      {loading && (
-        <Progress value={progress} size="lg" width="60%" colorScheme="teal" />
-      )}
-      {holdings.length > 0 && !loading && (
-        <Box p={5} shadow="md" borderWidth="1px" width="60%">
-          <Heading fontSize="xl">Live Mutual Fund Performance</Heading>
-          <Divider my={2} />
-          <HStack spacing={10} justifyContent="space-between">
-            <Stat>
-              <StatLabel>Overall Day Change %</StatLabel>
-              <StatNumber
-                color={overallGainLoss >= 0 ? 'green.500' : 'red.500'}
-              >
-                {overallGainLoss ? `${overallGainLoss?.toFixed(2)}%` : 'N/A'}
-              </StatNumber>
-              <StatHelpText>
-                {overallGainLoss >= 0 ? 'Gain' : 'Loss'}
-              </StatHelpText>
-            </Stat>
-            <Stat>
-              <StatLabel>Buy Today</StatLabel>
-              <StatNumber>{recommendation}</StatNumber>
-            </Stat>
-          </HStack>
-          <Divider my={2} />
-          <HStack spacing={10} justifyContent="space-between">
-            <Stat>
-              <StatLabel>Number of Stocks in Gain</StatLabel>
-              <StatNumber>{summary.gain}</StatNumber>
-            </Stat>
-            <Stat>
-              <StatLabel>Number of Stocks in Loss</StatLabel>
-              <StatNumber>{summary.loss}</StatNumber>
-            </Stat>
-            <Stat>
-              <StatLabel>Number of Stocks Data Unavailable</StatLabel>
-              <StatNumber>{summary.unavailable}</StatNumber>
-            </Stat>
-          </HStack>
-        </Box>
-      )}
-      {holdings.length > 0 &&
-        !loading &&
-        holdings.map((holding) => (
-          <Box
-            key={holding.name}
-            p={5}
-            shadow="md"
-            borderWidth="1px"
-            width="60%"
-          >
-            <Heading fontSize="xl">{holding.name}</Heading>
+
+      {selectedFund === 'SelectAll' ? (
+        <VStack spacing={4}>
+          {allMutualFundData.map((fundData) => (
+            <Box
+              key={fundData.key}
+              p={5}
+              shadow="md"
+              borderWidth="1px"
+              width="100%"
+              onClick={() =>
+                handleFundChange({ target: { value: fundData.key } })
+              }
+              cursor="pointer"
+            >
+              <Heading fontSize="xl">
+                {mutualFunds.find((mf) => mf.key === fundData.key).name}
+              </Heading>
+              <Divider my={2} />
+              <HStack spacing={10} justifyContent="space-between">
+                <Stat>
+                  <StatLabel>Overall Day Change %</StatLabel>
+                  <StatNumber
+                    color={
+                      fundData.weightedGainLossSum >= 0
+                        ? 'green.500'
+                        : 'red.500'
+                    }
+                  >
+                    {fundData.weightedGainLossSum
+                      ? `${fundData.weightedGainLossSum.toFixed(2)}%`
+                      : 'N/A'}
+                  </StatNumber>
+                  <StatHelpText>
+                    {fundData.weightedGainLossSum >= 0 ? 'Gain' : 'Loss'}
+                  </StatHelpText>
+                </Stat>
+                <Stat>
+                  <StatLabel>Buy Today</StatLabel>
+                  <StatNumber>
+                    {fundData.weightedGainLossSum < -1 ? 'Yes' : 'No'}
+                  </StatNumber>
+                </Stat>
+              </HStack>
+            </Box>
+          ))}
+        </VStack>
+      ) : selectedFund != '' ? (
+        <VStack spacing={4}>
+          <Box p={5} shadow="md" borderWidth="1px" width="100%">
+            <Heading fontSize="xl">Summary</Heading>
             <Divider my={2} />
             <HStack spacing={10} justifyContent="space-between">
               <Stat>
-                <StatLabel>Live Price</StatLabel>
-                <StatNumber>{holding.livePrice?.toFixed(2)}</StatNumber>
-              </Stat>
-              <Divider orientation="vertical" height="50px" />
-              <Stat>
-                <StatLabel>{"Yesterday's Close"}</StatLabel>
-                <StatNumber>{holding.previousClose?.toFixed(2)}</StatNumber>
-              </Stat>
-              <Divider orientation="vertical" height="50px" />
-              <Stat
-                color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
-              >
-                <StatLabel>Day Change</StatLabel>
-                <StatNumber>{holding.dayChange?.toFixed(2)}</StatNumber>
-              </Stat>
-              <Divider orientation="vertical" height="50px" />
-              <Stat
-                color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
-              >
-                <StatLabel>Day Change Percentage</StatLabel>
-                <StatNumber>{`${holding.dayChangePerc?.toFixed(
-                  2
-                )}%`}</StatNumber>
+                <StatLabel>Overall Gain/Loss</StatLabel>
+                <StatNumber
+                  color={overallGainLoss >= 0 ? 'green.500' : 'red.500'}
+                >
+                  {overallGainLoss !== null
+                    ? `${overallGainLoss.toFixed(2)}%`
+                    : 'N/A'}
+                </StatNumber>
                 <StatHelpText>
-                  {holding.dayChangePerc >= 0 ? 'Gain' : 'Loss'}
+                  {overallGainLoss >= 0 ? 'Gain' : 'Loss'}
                 </StatHelpText>
               </Stat>
-              <Divider orientation="vertical" height="50px" />
               <Stat>
-                <StatLabel>Percentage Holdings</StatLabel>
-                <StatNumber>{`${holding.percentage?.toFixed(2)}%`}</StatNumber>
+                <StatLabel>Buy Today</StatLabel>
+                <StatNumber>{recommendation}</StatNumber>
+              </Stat>
+            </HStack>
+            <HStack spacing={10} justifyContent="space-between">
+              <Stat>
+                <StatLabel>Number of Stocks in Gain</StatLabel>
+                <StatNumber>{summary.gain}</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Number of Stocks in Loss</StatLabel>
+                <StatNumber>{summary.loss}</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Number of Stocks Data Unavailable</StatLabel>
+                <StatNumber>{summary.unavailable}</StatNumber>
               </Stat>
             </HStack>
           </Box>
-        ))}
+          {holdings.map((holding) => (
+            <Box
+              key={holding.name}
+              p={5}
+              shadow="md"
+              borderWidth="1px"
+              width="60%"
+            >
+              <Heading fontSize="xl">{holding.name}</Heading>
+              <Divider my={2} />
+              <HStack spacing={10} justifyContent="space-between">
+                <Stat>
+                  <StatLabel>Live Price</StatLabel>
+                  <StatNumber>{holding.livePrice?.toFixed(2)}</StatNumber>
+                </Stat>
+                <Divider orientation="vertical" height="50px" />
+                <Stat>
+                  <StatLabel>{"Yesterday's Close"}</StatLabel>
+                  <StatNumber>{holding.previousClose?.toFixed(2)}</StatNumber>
+                </Stat>
+                <Divider orientation="vertical" height="50px" />
+                <Stat
+                  color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
+                >
+                  <StatLabel>Day Change</StatLabel>
+                  <StatNumber>{holding.dayChange?.toFixed(2)}</StatNumber>
+                </Stat>
+                <Divider orientation="vertical" height="50px" />
+                <Stat
+                  color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
+                >
+                  <StatLabel>Day Change Percentage</StatLabel>
+                  <StatNumber>{`${holding.dayChangePerc?.toFixed(
+                    2
+                  )}%`}</StatNumber>
+                  <StatHelpText>
+                    {holding.dayChangePerc >= 0 ? 'Gain' : 'Loss'}
+                  </StatHelpText>
+                </Stat>
+                <Divider orientation="vertical" height="50px" />
+                <Stat>
+                  <StatLabel>Percentage Holdings</StatLabel>
+                  <StatNumber>{`${holding.percentage?.toFixed(
+                    2
+                  )}%`}</StatNumber>
+                </Stat>
+              </HStack>
+            </Box>
+          ))}
+        </VStack>
+      ) : (
+        ''
+      )}
+      {loading && <Progress size="xs" isIndeterminate value={progress} />}
       {error && (
-        <Alert status="error">
+        <Alert status="error" mt={4}>
           <AlertIcon />
           {error}
         </Alert>
