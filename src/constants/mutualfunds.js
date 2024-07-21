@@ -40,5 +40,15 @@ export const mutualFunds = [
     name: 'HDFC Mid Cap Opportunities Direct Plan Growth',
     key: 'hdfc-mid-cap-opportunities-fund-direct-growth',
   },
+  {
+    amc: 'ICICI Prudential',
+    name: 'ICICI Prudential Infrastructure Direct Growth',
+    key: 'icici-prudential-infrastructure-fund-direct-growth',
+  },
+  {
+    amc: 'Nippon India',
+    name: 'Nippon India Growth Fund Direct Growth',
+    key: 'nippon-india-growth-fund-direct-growth',
+  },
   // Add more mutual funds here
 ];
