@@ -50,5 +50,15 @@ export const mutualFunds = [
     name: 'Nippon India Growth Fund Direct Growth',
     key: 'nippon-india-growth-fund-direct-growth',
   },
+  {
+    amc: 'SBI',
+    name: 'SBI Contra Fund Direct Growth',
+    key: 'sbi-contra-fund-direct-growth',
+  },
+  {
+    amc: 'Quant',
+    name: 'Quant Mid Cap Fund Direct Growth',
+    key: 'quant-mid-cap-fund-direct-growth',
+  },
   // Add more mutual funds here
 ];
