@@ -69,8 +69,8 @@ const LiveMutualFund = () => {
     try {
       const holdingsResponse = await axios.get(
         corsOff
-          ? `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${fundKey}`
-          : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${fundKey}`
+          ? `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
+          : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
