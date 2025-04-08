@@ -25,7 +25,6 @@ const LiveMutualFund = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [corsOff, setCorsOff] = useState(false);
   const [summary, setSummary] = useState({
     gain: 0,
     loss: 0,
@@ -35,12 +34,6 @@ const LiveMutualFund = () => {
   const [recommendation, setRecommendation] = useState('N/A');
   const [allMutualFundData, setAllMutualFundData] = useState([]);
   const [cachedData, setCachedData] = useState({});
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const corsParam = urlParams.get('cors');
-    setCorsOff(corsParam === 'off');
-  }, []);
 
   const handleFundChange = (event) => {
     const selected = event.target.value;
@@ -68,9 +61,7 @@ const LiveMutualFund = () => {
     setProgress(0);
     try {
       const holdingsResponse = await axios.get(
-        corsOff
-          ? `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
-          : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
+           `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
 
@@ -86,29 +77,18 @@ const LiveMutualFund = () => {
         const holding = companyHoldingDetails[i];
 
         if (holding.stock_search_id) {
-          if (!corsOff && i > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
-          }
-
           const symbolResponse = await axios.get(
-            corsOff
-              ? `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
-              : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+               `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
           );
           const { bseScriptCode } = symbolResponse.data.header;
 
           holding.bseScriptCode = bseScriptCode;
           symbols.push(bseScriptCode);
 
-          if (!corsOff && i > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
-          }
         }
 
         const priceResponse = await axios.post(
-          corsOff
-            ? 'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated'
-            : 'https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
+             'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
           {
             exchangeAggReqMap: {
               NSE: {
@@ -192,9 +172,7 @@ const LiveMutualFund = () => {
       if (!cachedData[key]) {
         try {
           const response = await axios.get(
-            corsOff
-              ? `https://groww.in/v1/api/data/mf/web/v3/scheme/search/${key}`
-              : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/data/mf/web/v3/scheme/search/${key}`
+              `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${key}`
           );
           const companyHoldingDetails = response.data.holdings;
 
@@ -205,28 +183,20 @@ const LiveMutualFund = () => {
             const holding = companyHoldingDetails[i];
 
             if (holding.stock_search_id) {
-              if (!corsOff && i > 0) {
-                await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
-              }
-
+              
               const symbolResponse = await axios.get(
-                corsOff
-                  ? `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
-                  : `https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+                
+                   `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
               );
               const { bseScriptCode } = symbolResponse.data.header;
 
               holding.bseScriptCode = bseScriptCode;
 
-              if (!corsOff && i > 0) {
-                await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed (e.g., 2 seconds)
-              }
+              
             }
 
             const priceResponse = await axios.post(
-              corsOff
-                ? 'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated'
-                : 'https://api.allorigins.win/raw?url=https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
+                 'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
               {
                 exchangeAggReqMap: {
                   NSE: {
