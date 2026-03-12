@@ -1,12 +1,10 @@
 import { Container, SimpleGrid, Stack } from '@chakra-ui/react';
-import { SearchIcon, TimeIcon } from '@chakra-ui/icons';
+import { TimeIcon, ViewIcon } from '@chakra-ui/icons';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Hero from '../../components/Hero/Hero';
 
 const Home = () => {
-  const isLocalhost = window.location.hostname === 'localhost';
-
   return (
     <Stack spacing={{ base: 10, md: 14 }} pb={16}>
       <Hero
@@ -17,12 +15,12 @@ const Home = () => {
 
       <Container maxW="7xl">
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-          <Link to={`/live-mutual-funds-analysis${isLocalhost ? '?cors=off' : ''}`}>
+          <Link to="/live-mutual-funds-analysis">
             <Card
               title="Live Mutual Fund Analysis"
               description="Peek inside a fund, see which holdings are carrying the team, and decide whether today is a buy-the-dip day or a touch-grass day."
               tag="Live"
-              icon={SearchIcon}
+              icon={ViewIcon}
             />
           </Link>
           <Link to="/ppf-calculator">

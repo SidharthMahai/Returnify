@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { InfoIcon, StarIcon, TimeIcon, ViewIcon } from '@chakra-ui/icons';
+import { InfoIcon, TimeIcon, ViewIcon } from '@chakra-ui/icons';
 import {
   Alert,
   AlertIcon,
@@ -41,6 +41,13 @@ const LiveMutualFund = () => {
   const selectBg = useColorModeValue('white', 'surface.800');
   const progressBg = useColorModeValue('surface.100', 'whiteAlpha.200');
   const hoverShadow = useColorModeValue('soft', 'glassDark');
+  const statLabelStyle = {
+    fontSize: 'xs',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: mutedText,
+  };
 
   const [selectedFund, setSelectedFund] = useState('');
   const [holdings, setHoldings] = useState([]);
@@ -57,6 +64,23 @@ const LiveMutualFund = () => {
   const [allMutualFundData, setAllMutualFundData] = useState([]);
   const [cachedData, setCachedData] = useState({});
 
+  const requestGet = (url) => {
+    return axios.get('/api/groww-proxy', {
+      params: {
+        url,
+        method: 'GET',
+      },
+    });
+  };
+
+  const requestPost = (url, data) => {
+    return axios.post('/api/groww-proxy', {
+      url,
+      method: 'POST',
+      data,
+    });
+  };
+
   const handleFundChange = (event) => {
     const selected = event.target.value;
     setSelectedFund(selected);
@@ -68,6 +92,7 @@ const LiveMutualFund = () => {
       loss: 0,
       unavailable: 0,
     });
+    setAllMutualFundData([]);
     setOverallGainLoss(null);
     setRecommendation('N/A');
 
@@ -84,7 +109,7 @@ const LiveMutualFund = () => {
     setProgress(0);
 
     try {
-      const holdingsResponse = await axios.get(
+      const holdingsResponse = await requestGet(
         `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
@@ -100,14 +125,14 @@ const LiveMutualFund = () => {
         const holding = companyHoldingDetails[i];
 
         if (holding.stock_search_id) {
-          const symbolResponse = await axios.get(
+          const symbolResponse = await requestGet(
             `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
           );
           const { bseScriptCode } = symbolResponse.data.header;
           holding.bseScriptCode = bseScriptCode;
         }
 
-        const priceResponse = await axios.post(
+        const priceResponse = await requestPost(
           'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
           {
             exchangeAggReqMap: {
@@ -157,6 +182,9 @@ const LiveMutualFund = () => {
         [fundKey]: { key: fundKey, weightedGainLossSum },
       }));
     } catch (fetchError) {
+      setHoldings([]);
+      setOverallGainLoss(null);
+      setRecommendation('N/A');
       setError('Failed to fetch data');
     } finally {
       setLoading(false);
@@ -174,7 +202,7 @@ const LiveMutualFund = () => {
     for (const key of mutualFundKeys) {
       if (!cachedData[key]) {
         try {
-          const response = await axios.get(
+          const response = await requestGet(
             `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${key}`
           );
           const companyHoldingDetails = response.data.holdings;
@@ -186,14 +214,14 @@ const LiveMutualFund = () => {
             const holding = companyHoldingDetails[i];
 
             if (holding.stock_search_id) {
-              const symbolResponse = await axios.get(
+              const symbolResponse = await requestGet(
                 `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
               );
               const { bseScriptCode } = symbolResponse.data.header;
               holding.bseScriptCode = bseScriptCode;
             }
 
-            const priceResponse = await axios.post(
+            const priceResponse = await requestPost(
               'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
               {
                 exchangeAggReqMap: {
@@ -220,6 +248,7 @@ const LiveMutualFund = () => {
 
           allData.push({ key, weightedGainLossSum });
         } catch (fetchError) {
+          setAllMutualFundData([]);
           setError('Failed to fetch data');
         } finally {
           setProgress((allData.length / mutualFundKeys.length) * 100);
@@ -325,7 +354,7 @@ const LiveMutualFund = () => {
             </Alert>
           )}
 
-          {!loading && selectedFund === 'SelectAll' && (
+          {!loading && !error && selectedFund === 'SelectAll' && (
               <Stack spacing={4}>
                 {allMutualFundData.map((fundData) => {
                 const score = fundData.weightedGainLossSum;
@@ -346,15 +375,15 @@ const LiveMutualFund = () => {
                     <Divider mb={4} />
                     <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                       <Stat>
-                        <StatLabel>Overall day change</StatLabel>
-                        <StatNumber color={score >= 0 ? 'green.500' : 'red.500'}>
+                        <StatLabel {...statLabelStyle}>Overall day change</StatLabel>
+                        <StatNumber fontSize="3xl" color={score >= 0 ? 'green.500' : 'red.500'}>
                           {score ? `${score.toFixed(2)}%` : 'N/A'}
                         </StatNumber>
                         <StatHelpText>{score >= 0 ? 'Having a decent day' : 'Slightly grumpy'}</StatHelpText>
                       </Stat>
                       <Stat>
-                        <StatLabel>Buy today?</StatLabel>
-                        <StatNumber>{score < -1 ? 'Yep' : 'Maybe not'}</StatNumber>
+                        <StatLabel {...statLabelStyle}>Buy today?</StatLabel>
+                        <StatNumber fontSize="3xl">{score < -1 ? 'Yep' : 'Maybe not'}</StatNumber>
                         <StatHelpText>Click for the juicy details</StatHelpText>
                       </Stat>
                     </SimpleGrid>
@@ -364,7 +393,10 @@ const LiveMutualFund = () => {
               </Stack>
           )}
 
-          {!loading && selectedFund !== '' && selectedFund !== 'SelectAll' && (
+          {!loading &&
+            !error &&
+            selectedFund !== '' &&
+            selectedFund !== 'SelectAll' && (
             <Stack spacing={5}>
               <Box {...panelStyle} p={{ base: 5, md: 6 }}>
                 <HStack spacing={3} mb={4}>
@@ -375,8 +407,8 @@ const LiveMutualFund = () => {
                 </HStack>
                 <SimpleGrid columns={{ base: 1, md: 2, xl: 5 }} spacing={4}>
                   <Stat>
-                    <StatLabel>Live gain/loss</StatLabel>
-                    <StatNumber color={overallGainLoss >= 0 ? 'green.500' : 'red.500'}>
+                    <StatLabel {...statLabelStyle}>Live gain/loss</StatLabel>
+                    <StatNumber fontSize="3xl" color={overallGainLoss >= 0 ? 'green.500' : 'red.500'}>
                       {overallGainLoss !== null ? `${overallGainLoss.toFixed(2)}%` : 'N/A'}
                     </StatNumber>
                     <StatHelpText>
@@ -384,21 +416,21 @@ const LiveMutualFund = () => {
                     </StatHelpText>
                   </Stat>
                   <Stat>
-                    <StatLabel>Buy today?</StatLabel>
-                    <StatNumber>{recommendation}</StatNumber>
+                    <StatLabel {...statLabelStyle}>Buy today?</StatLabel>
+                    <StatNumber fontSize="3xl">{recommendation}</StatNumber>
                     <StatHelpText>Our tiny rule: below -1%</StatHelpText>
                   </Stat>
                   <Stat>
-                    <StatLabel>Stocks in gain</StatLabel>
-                    <StatNumber>{summary.gain}</StatNumber>
+                    <StatLabel {...statLabelStyle}>Stocks in gain</StatLabel>
+                    <StatNumber fontSize="3xl">{summary.gain}</StatNumber>
                   </Stat>
                   <Stat>
-                    <StatLabel>Stocks in loss</StatLabel>
-                    <StatNumber>{summary.loss}</StatNumber>
+                    <StatLabel {...statLabelStyle}>Stocks in loss</StatLabel>
+                    <StatNumber fontSize="3xl">{summary.loss}</StatNumber>
                   </Stat>
                   <Stat>
-                    <StatLabel>No data</StatLabel>
-                    <StatNumber>{summary.unavailable}</StatNumber>
+                    <StatLabel {...statLabelStyle}>No data</StatLabel>
+                    <StatNumber fontSize="3xl">{summary.unavailable}</StatNumber>
                   </Stat>
                 </SimpleGrid>
               </Box>
@@ -408,37 +440,52 @@ const LiveMutualFund = () => {
                   <Box key={holding.name} {...panelStyle} p={{ base: 5, md: 6 }}>
                     <HStack justify="space-between" align="flex-start" mb={4} spacing={4}>
                       <Box>
-                        <Heading fontSize={{ base: 'md', md: 'lg' }} mb={1} color={primaryText}>
+                        <Heading fontSize={{ base: 'lg', md: 'xl' }} mb={1} color={primaryText}>
                           {holding.name}
                         </Heading>
                         <Text color={mutedText} fontSize="sm">
                           Holding weight: {holding.percentage?.toFixed(2) ?? 'N/A'}%
                         </Text>
                       </Box>
-                      <Icon as={StarIcon} boxSize={4} color="brand.500" />
                     </HStack>
-                    <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
-                      <Stat>
-                        <StatLabel>Live price</StatLabel>
-                        <StatNumber fontSize="xl">{holding.livePrice?.toFixed(2) ?? 'N/A'}</StatNumber>
-                      </Stat>
-                      <Stat>
-                        <StatLabel>Yesterday close</StatLabel>
-                        <StatNumber fontSize="xl">{holding.previousClose?.toFixed(2) ?? 'N/A'}</StatNumber>
-                      </Stat>
-                      <Stat color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}>
-                        <StatLabel>Day change</StatLabel>
-                        <StatNumber fontSize="xl">{holding.dayChange?.toFixed(2) ?? 'N/A'}</StatNumber>
-                      </Stat>
-                      <Stat color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}>
-                        <StatLabel>Day change %</StatLabel>
-                        <StatNumber fontSize="xl">
+                    <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={3}>
+                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                        <Text {...statLabelStyle}>Live price</Text>
+                        <Text fontSize="2xl" fontWeight="800" color={primaryText}>
+                          {holding.livePrice?.toFixed(2) ?? 'N/A'}
+                        </Text>
+                      </Box>
+                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                        <Text {...statLabelStyle}>Yesterday close</Text>
+                        <Text fontSize="2xl" fontWeight="800" color={primaryText}>
+                          {holding.previousClose?.toFixed(2) ?? 'N/A'}
+                        </Text>
+                      </Box>
+                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                        <Text {...statLabelStyle}>Day change</Text>
+                        <Text
+                          fontSize="2xl"
+                          fontWeight="800"
+                          color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
+                        >
+                          {holding.dayChange?.toFixed(2) ?? 'N/A'}
+                        </Text>
+                      </Box>
+                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                        <Text {...statLabelStyle}>Day change %</Text>
+                        <Text
+                          fontSize="2xl"
+                          fontWeight="800"
+                          color={holding.dayChangePerc >= 0 ? 'green.500' : 'red.500'}
+                        >
                           {holding.dayChangePerc !== null && holding.dayChangePerc !== undefined
                             ? `${holding.dayChangePerc.toFixed(2)}%`
                             : 'N/A'}
-                        </StatNumber>
-                        <StatHelpText>{holding.dayChangePerc >= 0 ? 'Up' : 'Down'}</StatHelpText>
-                      </Stat>
+                        </Text>
+                        <Text fontSize="sm" color={mutedText}>
+                          {holding.dayChangePerc >= 0 ? 'Up' : 'Down'}
+                        </Text>
+                      </Box>
                     </SimpleGrid>
                   </Box>
                 ))}
