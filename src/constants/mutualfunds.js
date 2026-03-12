@@ -17,13 +17,8 @@ export const mutualFunds = [
   },
   {
     amc: 'ICICI Prudential',
-    name: 'ICICI Prudential Manufacturing Fund Direct Growth',
-    key: 'icici-prudential-manufacture-in-india-fund-direct-growth',
-  },
-  {
-    amc: 'ICICI Prudential',
     name: 'ICICI Prudential Value Discovery Direct Growth',
-    key: 'icici-prudential-value-discovery-fund-direct-growth',
+    key: 'icici-prudential-value-direct-growth',
   },
   {
     amc: 'Nippon India',
@@ -37,28 +32,23 @@ export const mutualFunds = [
   },
   {
     amc: 'HDFC',
-    name: 'HDFC Mid Cap Opportunities Direct Plan Growth',
-    key: 'hdfc-mid-cap-opportunities-fund-direct-growth',
+    name: 'HDFC Mid Cap Fund Direct Growth',
+    key: 'hdfc-mid-cap-fund-direct-growth',
+  },
+  {
+    amc: 'Bandhan',
+    name: 'Bandhan Small Cap Fund Direct Growth',
+    key: 'bandhan-small-cap-fund-direct-growth',
+  },
+  {
+    amc: 'Parag Parikh',
+    name: 'Parag Parikh Flexi Cap Fund Direct Growth',
+    key: 'parag-parikh-long-term-value-fund-direct-growth',
   },
   {
     amc: 'ICICI Prudential',
-    name: 'ICICI Prudential Infrastructure Direct Growth',
-    key: 'icici-prudential-infrastructure-fund-direct-growth',
-  },
-  {
-    amc: 'Nippon India',
-    name: 'Nippon India Growth Fund Direct Growth',
-    key: 'nippon-india-growth-fund-direct-growth',
-  },
-  {
-    amc: 'SBI',
-    name: 'SBI Contra Fund Direct Growth',
-    key: 'sbi-contra-fund-direct-growth',
-  },
-  {
-    amc: 'Quant',
-    name: 'Quant Mid Cap Fund Direct Growth',
-    key: 'quant-mid-cap-fund-direct-growth',
-  },
+    name: 'ICICI Prudential Manufacturing Fund Direct Growth',
+    key: 'icici-prudential-manufacturing-fund-direct-growth',
+  }
   // Add more mutual funds here
 ];
