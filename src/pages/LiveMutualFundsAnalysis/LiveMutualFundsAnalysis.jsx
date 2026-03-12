@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import axios from 'axios';
 import { InfoIcon, TimeIcon, ViewIcon } from '@chakra-ui/icons';
 import {
@@ -35,7 +35,6 @@ const LiveMutualFund = () => {
     borderRadius: '3xl',
     boxShadow: useColorModeValue('glass', 'glassDark'),
   };
-  const tileBg = useColorModeValue('surface.50', 'whiteAlpha.120');
   const mutedText = useColorModeValue('ink.600', 'whiteAlpha.700');
   const primaryText = useColorModeValue('ink.900', 'whiteAlpha.900');
   const selectBg = useColorModeValue('white', 'surface.800');
@@ -63,6 +62,7 @@ const LiveMutualFund = () => {
   const [recommendation, setRecommendation] = useState('N/A');
   const [allMutualFundData, setAllMutualFundData] = useState([]);
   const [cachedData, setCachedData] = useState({});
+  const symbolCacheRef = useRef({});
 
   const requestGet = (url) => {
     return axios.get('/api/groww-proxy', {
@@ -79,6 +79,77 @@ const LiveMutualFund = () => {
       method: 'POST',
       data,
     });
+  };
+
+  const getBseScriptCode = async (stockSearchId) => {
+    if (!stockSearchId) {
+      return null;
+    }
+
+    if (symbolCacheRef.current[stockSearchId]) {
+      return symbolCacheRef.current[stockSearchId];
+    }
+
+    const symbolResponse = await requestGet(
+      `https://groww.in/v1/api/stocks_data/v1/company/search_id/${stockSearchId}`
+    );
+    const bseScriptCode = symbolResponse?.data?.header?.bseScriptCode || null;
+    symbolCacheRef.current[stockSearchId] = bseScriptCode;
+    return bseScriptCode;
+  };
+
+  const getLivePriceMap = async (priceSymbolList, onProgress = () => {}) => {
+    if (!priceSymbolList.length) {
+      onProgress(1);
+      return {};
+    }
+
+    const CHUNK_SIZE = 35;
+    const mergedPriceMap = {};
+    let processedSymbols = 0;
+
+    const bumpProgress = (count) => {
+      processedSymbols += count;
+      onProgress(Math.min(processedSymbols / priceSymbolList.length, 1));
+    };
+
+    const fetchPriceBatch = async (symbols) => {
+      const priceResponse = await requestPost(
+        'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
+        {
+          exchangeAggReqMap: {
+            NSE: { priceSymbolList: [], indexSymbolList: [] },
+            BSE: { priceSymbolList: symbols, indexSymbolList: [] },
+          },
+        }
+      );
+
+      return priceResponse?.data?.exchangeAggRespMap?.BSE?.priceLivePointsMap || {};
+    };
+
+    for (let i = 0; i < priceSymbolList.length; i += CHUNK_SIZE) {
+      const batch = priceSymbolList.slice(i, i + CHUNK_SIZE);
+
+      try {
+        const batchMap = await fetchPriceBatch(batch);
+        Object.assign(mergedPriceMap, batchMap);
+        bumpProgress(batch.length);
+      } catch (batchError) {
+        // If a large payload fails, gracefully degrade to single-symbol calls.
+        for (const symbol of batch) {
+          try {
+            const singleMap = await fetchPriceBatch([symbol]);
+            Object.assign(mergedPriceMap, singleMap);
+          } catch (singleError) {
+            // Continue with remaining symbols.
+          } finally {
+            bumpProgress(1);
+          }
+        }
+      }
+    }
+
+    return mergedPriceMap;
   };
 
   const handleFundChange = (event) => {
@@ -109,44 +180,48 @@ const LiveMutualFund = () => {
     setProgress(0);
 
     try {
+      setProgress(8);
       const holdingsResponse = await requestGet(
         `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${fundKey}`
       );
       const companyHoldingDetails = holdingsResponse.data.holdings;
+      setProgress(18);
 
-      const totalHoldings = companyHoldingDetails.length;
+      const totalHoldings = Math.max(companyHoldingDetails.length, 1);
+      let resolvedSymbols = 0;
+      const enrichedHoldings = await Promise.all(
+        companyHoldingDetails.map(async (holding) => {
+          const bseScriptCode = await getBseScriptCode(holding.stock_search_id);
+          resolvedSymbols += 1;
+          setProgress(18 + (resolvedSymbols / totalHoldings) * 42);
+          return {
+            ...holding,
+            bseScriptCode,
+          };
+        })
+      );
+
+      const uniqueCodes = [
+        ...new Set(
+          enrichedHoldings
+            .map((holding) => holding.bseScriptCode)
+            .filter(Boolean)
+        ),
+      ];
+      const priceMap = await getLivePriceMap(uniqueCodes, (fraction) => {
+        setProgress(60 + fraction * 32);
+      });
+
       const updatedHoldings = [];
       let gain = 0;
       let loss = 0;
       let unavailable = 0;
       let weightedGainLossSum = 0;
 
-      for (let i = 0; i < totalHoldings; i++) {
-        const holding = companyHoldingDetails[i];
-
-        if (holding.stock_search_id) {
-          const symbolResponse = await requestGet(
-            `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
-          );
-          const { bseScriptCode } = symbolResponse.data.header;
-          holding.bseScriptCode = bseScriptCode;
-        }
-
-        const priceResponse = await requestPost(
-          'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
-          {
-            exchangeAggReqMap: {
-              NSE: { priceSymbolList: [], indexSymbolList: [] },
-              BSE: { priceSymbolList: [holding.bseScriptCode], indexSymbolList: [] },
-            },
-          }
-        );
-
-        const priceData =
-          priceResponse.data.exchangeAggRespMap.BSE.priceLivePointsMap;
-
+      for (let i = 0; i < enrichedHoldings.length; i++) {
+        const holding = enrichedHoldings[i];
         const priceInfo = holding.bseScriptCode
-          ? priceData[holding.bseScriptCode]
+          ? priceMap[holding.bseScriptCode]
           : null;
 
         updatedHoldings.push({
@@ -169,8 +244,6 @@ const LiveMutualFund = () => {
         } else {
           unavailable++;
         }
-
-        setProgress(((i + 1) / totalHoldings) * 100);
       }
 
       setHoldings(updatedHoldings);
@@ -181,6 +254,8 @@ const LiveMutualFund = () => {
         ...prevData,
         [fundKey]: { key: fundKey, weightedGainLossSum },
       }));
+      setProgress(96);
+      setProgress(100);
     } catch (fetchError) {
       setHoldings([]);
       setOverallGainLoss(null);
@@ -198,67 +273,77 @@ const LiveMutualFund = () => {
 
     const mutualFundKeys = mutualFunds.map((fund) => fund.key);
     const allData = [];
+    const totalFunds = Math.max(mutualFundKeys.length, 1);
 
-    for (const key of mutualFundKeys) {
+    for (let fundIndex = 0; fundIndex < mutualFundKeys.length; fundIndex++) {
+      const key = mutualFundKeys[fundIndex];
+      const fundStart = (fundIndex / totalFunds) * 100;
+      const fundEnd = ((fundIndex + 1) / totalFunds) * 100;
+      const setFundProgress = (fraction) => {
+        setProgress(fundStart + (fundEnd - fundStart) * fraction);
+      };
+
       if (!cachedData[key]) {
         try {
+          setFundProgress(0.05);
           const response = await requestGet(
             `https://groww.in/v1/api/data/mf/web/v4/scheme/search/${key}`
           );
           const companyHoldingDetails = response.data.holdings;
+          setFundProgress(0.12);
 
-          const totalHoldings = companyHoldingDetails.length;
-          let weightedGainLossSum = 0;
-
-          for (let i = 0; i < totalHoldings; i++) {
-            const holding = companyHoldingDetails[i];
-
-            if (holding.stock_search_id) {
-              const symbolResponse = await requestGet(
-                `https://groww.in/v1/api/stocks_data/v1/company/search_id/${holding.stock_search_id}`
+          const totalHoldings = Math.max(companyHoldingDetails.length, 1);
+          let resolvedSymbols = 0;
+          const enrichedHoldings = await Promise.all(
+            companyHoldingDetails.map(async (holding) => {
+              const bseScriptCode = await getBseScriptCode(
+                holding.stock_search_id
               );
-              const { bseScriptCode } = symbolResponse.data.header;
-              holding.bseScriptCode = bseScriptCode;
-            }
+              resolvedSymbols += 1;
+              setFundProgress(0.12 + (resolvedSymbols / totalHoldings) * 0.46);
+              return {
+                ...holding,
+                bseScriptCode,
+              };
+            })
+          );
 
-            const priceResponse = await requestPost(
-              'https://groww.in/v1/api/stocks_data/v1/tr_live_delayed/segment/CASH/latest_aggregated',
-              {
-                exchangeAggReqMap: {
-                  NSE: { priceSymbolList: [], indexSymbolList: [] },
-                  BSE: { priceSymbolList: [holding.bseScriptCode], indexSymbolList: [] },
-                },
-              }
-            );
+          const uniqueCodes = [
+            ...new Set(
+              enrichedHoldings
+                .map((holding) => holding.bseScriptCode)
+                .filter(Boolean)
+            ),
+          ];
+          const priceMap = await getLivePriceMap(uniqueCodes, (fraction) => {
+            setFundProgress(0.58 + fraction * 0.36);
+          });
 
-            const priceData =
-              priceResponse.data.exchangeAggRespMap.BSE.priceLivePointsMap;
-
+          let weightedGainLossSum = 0;
+          enrichedHoldings.forEach((holding) => {
             const priceInfo = holding.bseScriptCode
-              ? priceData[holding.bseScriptCode]
+              ? priceMap[holding.bseScriptCode]
               : null;
-
             if (priceInfo) {
               const holdingWeight = holding.corpus_per / 100;
               weightedGainLossSum += holdingWeight * priceInfo.dayChangePerc;
             }
-
-            setProgress(((allData.length + 1) / mutualFundKeys.length) * 100);
-          }
+          });
 
           allData.push({ key, weightedGainLossSum });
+          setFundProgress(1);
         } catch (fetchError) {
           setAllMutualFundData([]);
           setError('Failed to fetch data');
-        } finally {
-          setProgress((allData.length / mutualFundKeys.length) * 100);
         }
       } else {
         allData.push(cachedData[key]);
+        setFundProgress(1);
       }
     }
 
     setAllMutualFundData(allData);
+    setProgress(100);
     setLoading(false);
   };
 
@@ -307,21 +392,21 @@ const LiveMutualFund = () => {
               </Box>
 
               <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                <Box borderRadius="2xl" bg={tileBg} p={4}>
+                <Box borderRadius="2xl" borderWidth="1px" borderColor="whiteAlpha.300" p={4}>
                   <HStack spacing={2} mb={1}>
                     <Icon as={ViewIcon} color="brand.500" />
                     <Text color={mutedText} fontSize="sm">Funds</Text>
                   </HStack>
-                  <Text fontSize="2xl" fontWeight="800" color={primaryText}>
+                  <Text fontSize="3xl" fontWeight="800" color={primaryText}>
                     {mutualFunds.length}
                   </Text>
                 </Box>
-                <Box borderRadius="2xl" bg={tileBg} p={4}>
+                <Box borderRadius="2xl" borderWidth="1px" borderColor="whiteAlpha.300" p={4}>
                   <HStack spacing={2} mb={1}>
                     <Icon as={TimeIcon} color="brand.500" />
                     <Text color={mutedText} fontSize="sm">Signal</Text>
                   </HStack>
-                  <Text fontSize="2xl" fontWeight="800" color={primaryText}>
+                  <Text fontSize="3xl" fontWeight="800" color={primaryText}>
                     Live-ish vibes
                   </Text>
                 </Box>
@@ -443,25 +528,28 @@ const LiveMutualFund = () => {
                         <Heading fontSize={{ base: 'lg', md: 'xl' }} mb={1} color={primaryText}>
                           {holding.name}
                         </Heading>
-                        <Text color={mutedText} fontSize="sm">
-                          Holding weight: {holding.percentage?.toFixed(2) ?? 'N/A'}%
-                        </Text>
+                        <HStack spacing={2}>
+                          <Text {...statLabelStyle}>Holding weight</Text>
+                          <Text color="brand.500" fontWeight="800" fontSize="lg">
+                            {holding.percentage?.toFixed(2) ?? 'N/A'}%
+                          </Text>
+                        </HStack>
                       </Box>
                     </HStack>
                     <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={3}>
-                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                      <Box borderRadius="xl" borderWidth="1px" borderColor="whiteAlpha.300" p={4}>
                         <Text {...statLabelStyle}>Live price</Text>
                         <Text fontSize="2xl" fontWeight="800" color={primaryText}>
                           {holding.livePrice?.toFixed(2) ?? 'N/A'}
                         </Text>
                       </Box>
-                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                      <Box borderRadius="xl" borderWidth="1px" borderColor="whiteAlpha.300" p={4}>
                         <Text {...statLabelStyle}>Yesterday close</Text>
                         <Text fontSize="2xl" fontWeight="800" color={primaryText}>
                           {holding.previousClose?.toFixed(2) ?? 'N/A'}
                         </Text>
                       </Box>
-                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                      <Box borderRadius="xl" borderWidth="1px" borderColor="whiteAlpha.300" p={4}>
                         <Text {...statLabelStyle}>Day change</Text>
                         <Text
                           fontSize="2xl"
@@ -471,7 +559,7 @@ const LiveMutualFund = () => {
                           {holding.dayChange?.toFixed(2) ?? 'N/A'}
                         </Text>
                       </Box>
-                      <Box borderRadius="xl" bg={tileBg} p={4}>
+                      <Box borderRadius="xl" borderWidth="1px" borderColor="whiteAlpha.300" p={4}>
                         <Text {...statLabelStyle}>Day change %</Text>
                         <Text
                           fontSize="2xl"
