@@ -1,7 +1,14 @@
-import { Box, Heading, HStack, Text, useColorModeValue } from '@chakra-ui/react';
+import {
+  Box,
+  Heading,
+  HStack,
+  Icon,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import PropTypes from 'prop-types';
 
-const Card = ({ title, description, tag = 'Calculator' }) => {
+const Card = ({ title, description, tag = 'Calculator', icon }) => {
   const bg = useColorModeValue('rgba(255, 255, 255, 0.74)', 'rgba(15, 27, 45, 0.78)');
   const borderColor = useColorModeValue('whiteAlpha.700', 'whiteAlpha.200');
   const shadow = useColorModeValue('glass', 'glassDark');
@@ -40,21 +47,21 @@ const Card = ({ title, description, tag = 'Calculator' }) => {
         borderColor: 'brand.200',
       }}
     >
-      <HStack
-        position="relative"
-        zIndex={1}
-        display="inline-flex"
-        px={3}
-        py={1}
-        mb={5}
-        borderRadius="full"
-        bg={badgeBg}
-        color="brand.700"
-        fontSize="sm"
-        fontWeight="800"
-        letterSpacing="0.04em"
-      >
-        <Text>{tag}</Text>
+      <HStack position="relative" zIndex={1} justify="space-between" align="flex-start" mb={5}>
+        <HStack
+          display="inline-flex"
+          px={3}
+          py={1}
+          borderRadius="full"
+          bg={badgeBg}
+          color="brand.700"
+          fontSize="sm"
+          fontWeight="800"
+          letterSpacing="0.04em"
+        >
+          <Text>{tag}</Text>
+        </HStack>
+        {icon && <Icon as={icon} boxSize={5} color="brand.500" />}
       </HStack>
       <Heading
         position="relative"
@@ -78,6 +85,7 @@ Card.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   tag: PropTypes.string,
+  icon: PropTypes.elementType,
 };
 
 export default Card;

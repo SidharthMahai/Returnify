@@ -1,4 +1,5 @@
 import { Container, SimpleGrid, Stack } from '@chakra-ui/react';
+import { SearchIcon, TimeIcon } from '@chakra-ui/icons';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Hero from '../../components/Hero/Hero';
@@ -21,6 +22,7 @@ const Home = () => {
               title="Live Mutual Fund Analysis"
               description="Peek inside a fund, see which holdings are carrying the team, and decide whether today is a buy-the-dip day or a touch-grass day."
               tag="Live"
+              icon={SearchIcon}
             />
           </Link>
           <Link to="/ppf-calculator">
@@ -28,6 +30,7 @@ const Home = () => {
               title="PPF Calculator"
               description="Slide a few numbers around and see how your long-term savings could grow without opening ten tabs."
               tag="PPF"
+              icon={TimeIcon}
             />
           </Link>
         </SimpleGrid>

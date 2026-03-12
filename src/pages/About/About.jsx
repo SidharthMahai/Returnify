@@ -1,8 +1,17 @@
 import {
+  AtSignIcon,
+  ExternalLinkIcon,
+  InfoIcon,
+  StarIcon,
+  ViewIcon,
+} from '@chakra-ui/icons';
+import {
   Box,
   Container,
   Grid,
   Heading,
+  HStack,
+  Icon,
   Link as ChakraLink,
   SimpleGrid,
   Stack,
@@ -15,18 +24,22 @@ const links = [
   {
     label: 'portfolio',
     href: 'https://sidharthmahaiportfolio.vercel.app',
+    icon: ExternalLinkIcon,
   },
   {
     label: 'github',
     href: 'https://github.com/SidharthMahai',
+    icon: ViewIcon,
   },
   {
     label: 'linkedin',
     href: 'https://www.linkedin.com/in/sidharth-mahai-52a805173/',
+    icon: AtSignIcon,
   },
   {
     label: 'repo',
     href: 'https://github.com/SidharthMahai/Returnify',
+    icon: StarIcon,
   },
 ];
 
@@ -69,9 +82,12 @@ const About = () => {
             bg={headerSurface}
           >
             <Stack spacing={1}>
-              <Text fontSize="sm" fontFamily="mono" color={mutedText}>
-                /src/pages/about.tsx
-              </Text>
+              <HStack spacing={2}>
+                <Icon as={InfoIcon} color="brand.500" />
+                <Text fontSize="sm" fontFamily="mono" color={mutedText}>
+                  /src/pages/about.tsx
+                </Text>
+              </HStack>
               <Heading size="md" color={textColor}>
                 Project Notes
               </Heading>
@@ -112,16 +128,18 @@ const About = () => {
             <Box p={{ base: 5, md: 7 }}>
               <Stack spacing={6}>
                 <Box>
-                  <Text
-                    fontSize="sm"
-                    textTransform="uppercase"
-                    letterSpacing="0.14em"
-                    color="brand.700"
-                    fontWeight="800"
-                    mb={3}
-                  >
-                    Stack
-                  </Text>
+                  <HStack spacing={3} mb={3}>
+                    <Icon as={ViewIcon} boxSize={4} color="brand.500" />
+                    <Text
+                      fontSize="sm"
+                      textTransform="uppercase"
+                      letterSpacing="0.14em"
+                      color="brand.700"
+                      fontWeight="800"
+                    >
+                      Stack
+                    </Text>
+                  </HStack>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                     {['React', 'Vite', 'Chakra UI', 'React Router', 'Axios', 'Vercel'].map(
                       (item) => (
@@ -144,16 +162,18 @@ const About = () => {
                 </Box>
 
                 <Box>
-                  <Text
-                    fontSize="sm"
-                    textTransform="uppercase"
-                    letterSpacing="0.14em"
-                    color="brand.700"
-                    fontWeight="800"
-                    mb={3}
-                  >
-                    Links
-                  </Text>
+                  <HStack spacing={3} mb={3}>
+                    <Icon as={ExternalLinkIcon} boxSize={4} color="brand.500" />
+                    <Text
+                      fontSize="sm"
+                      textTransform="uppercase"
+                      letterSpacing="0.14em"
+                      color="brand.700"
+                      fontWeight="800"
+                    >
+                      Links
+                    </Text>
+                  </HStack>
                   <Stack spacing={3}>
                     {links.map((item) => (
                       <Box
@@ -165,9 +185,12 @@ const About = () => {
                         borderRadius="xl"
                         bg={tileSurface}
                       >
-                        <Text fontSize="sm" color={mutedText} fontFamily="mono" mb={1}>
-                          {item.label}
-                        </Text>
+                        <HStack spacing={2} mb={1}>
+                          <Icon as={item.icon} color="brand.500" />
+                          <Text fontSize="sm" color={mutedText} fontFamily="mono">
+                            {item.label}
+                          </Text>
+                        </HStack>
                         <ChakraLink
                           href={item.href}
                           isExternal

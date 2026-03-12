@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { InfoIcon, StarIcon, TimeIcon, ViewIcon } from '@chakra-ui/icons';
 import {
   Alert,
   AlertIcon,
@@ -8,6 +9,8 @@ import {
   Divider,
   Grid,
   Heading,
+  HStack,
+  Icon,
   Progress,
   Select,
   SimpleGrid,
@@ -243,9 +246,12 @@ const LiveMutualFund = () => {
           <Box {...panelStyle} p={{ base: 5, md: 7 }}>
             <Grid templateColumns={{ base: '1fr', lg: '1.3fr 0.7fr' }} gap={6} alignItems="end">
               <Box>
-                <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.14em" color="brand.700" fontWeight="800" mb={2}>
-                  Fund picker
-                </Text>
+                <HStack spacing={3} mb={2}>
+                  <Icon as={ViewIcon} boxSize={4} color="brand.500" />
+                  <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.14em" color="brand.700" fontWeight="800">
+                    Fund picker
+                  </Text>
+                </HStack>
                 <Heading size="lg" mb={2} color={primaryText}>
                   Choose one fund or go full nosy
                 </Heading>
@@ -273,13 +279,19 @@ const LiveMutualFund = () => {
 
               <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                 <Box borderRadius="2xl" bg={tileBg} p={4}>
-                  <Text color={mutedText} fontSize="sm">Funds</Text>
+                  <HStack spacing={2} mb={1}>
+                    <Icon as={ViewIcon} color="brand.500" />
+                    <Text color={mutedText} fontSize="sm">Funds</Text>
+                  </HStack>
                   <Text fontSize="2xl" fontWeight="800" color={primaryText}>
                     {mutualFunds.length}
                   </Text>
                 </Box>
                 <Box borderRadius="2xl" bg={tileBg} p={4}>
-                  <Text color={mutedText} fontSize="sm">Signal</Text>
+                  <HStack spacing={2} mb={1}>
+                    <Icon as={TimeIcon} color="brand.500" />
+                    <Text color={mutedText} fontSize="sm">Signal</Text>
+                  </HStack>
                   <Text fontSize="2xl" fontWeight="800" color={primaryText}>
                     Live-ish vibes
                   </Text>
@@ -314,8 +326,8 @@ const LiveMutualFund = () => {
           )}
 
           {!loading && selectedFund === 'SelectAll' && (
-            <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={5}>
-              {allMutualFundData.map((fundData) => {
+              <Stack spacing={4}>
+                {allMutualFundData.map((fundData) => {
                 const score = fundData.weightedGainLossSum;
 
                 return (
@@ -349,15 +361,18 @@ const LiveMutualFund = () => {
                   </Box>
                 );
               })}
-            </SimpleGrid>
+              </Stack>
           )}
 
           {!loading && selectedFund !== '' && selectedFund !== 'SelectAll' && (
             <Stack spacing={5}>
               <Box {...panelStyle} p={{ base: 5, md: 6 }}>
-                <Heading fontSize="xl" mb={4} color={primaryText}>
-                  Quick summary
-                </Heading>
+                <HStack spacing={3} mb={4}>
+                  <Icon as={InfoIcon} boxSize={4} color="brand.500" />
+                  <Heading fontSize="xl" color={primaryText}>
+                    Quick summary
+                  </Heading>
+                </HStack>
                 <SimpleGrid columns={{ base: 1, md: 2, xl: 5 }} spacing={4}>
                   <Stat>
                     <StatLabel>Live gain/loss</StatLabel>
@@ -388,14 +403,21 @@ const LiveMutualFund = () => {
                 </SimpleGrid>
               </Box>
 
-              <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={5}>
+              <Stack spacing={4}>
                 {holdings.map((holding) => (
-                  <Box key={holding.name} {...panelStyle} p={6}>
-                    <Heading fontSize="lg" mb={3} color={primaryText}>
-                      {holding.name}
-                    </Heading>
-                    <Divider mb={4} />
-                    <SimpleGrid columns={{ base: 2, md: 3 }} spacing={4}>
+                  <Box key={holding.name} {...panelStyle} p={{ base: 5, md: 6 }}>
+                    <HStack justify="space-between" align="flex-start" mb={4} spacing={4}>
+                      <Box>
+                        <Heading fontSize={{ base: 'md', md: 'lg' }} mb={1} color={primaryText}>
+                          {holding.name}
+                        </Heading>
+                        <Text color={mutedText} fontSize="sm">
+                          Holding weight: {holding.percentage?.toFixed(2) ?? 'N/A'}%
+                        </Text>
+                      </Box>
+                      <Icon as={StarIcon} boxSize={4} color="brand.500" />
+                    </HStack>
+                    <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
                       <Stat>
                         <StatLabel>Live price</StatLabel>
                         <StatNumber fontSize="xl">{holding.livePrice?.toFixed(2) ?? 'N/A'}</StatNumber>
@@ -417,16 +439,10 @@ const LiveMutualFund = () => {
                         </StatNumber>
                         <StatHelpText>{holding.dayChangePerc >= 0 ? 'Up' : 'Down'}</StatHelpText>
                       </Stat>
-                      <Stat>
-                        <StatLabel>Holding weight</StatLabel>
-                        <StatNumber fontSize="xl">
-                          {holding.percentage?.toFixed(2) ?? 'N/A'}%
-                        </StatNumber>
-                      </Stat>
                     </SimpleGrid>
                   </Box>
                 ))}
-              </SimpleGrid>
+              </Stack>
             </Stack>
           )}
         </Stack>

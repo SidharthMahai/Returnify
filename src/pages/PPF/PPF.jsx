@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { InfoIcon, RepeatIcon, TimeIcon, ViewIcon } from '@chakra-ui/icons';
 import {
   Accordion,
   AccordionButton,
@@ -10,6 +11,7 @@ import {
   Grid,
   Heading,
   HStack,
+  Icon,
   Radio,
   RadioGroup,
   SimpleGrid,
@@ -45,6 +47,7 @@ const PpfCalculatorPage = () => {
   const tileBg = useColorModeValue('surface.50', 'whiteAlpha.120');
   const mutedText = useColorModeValue('ink.600', 'whiteAlpha.700');
   const primaryText = useColorModeValue('ink.900', 'whiteAlpha.900');
+  const sliderTrackBg = useColorModeValue('surface.100', 'whiteAlpha.200');
   const formatCurrency = (value) =>
     new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -129,9 +132,12 @@ const PpfCalculatorPage = () => {
           <Box {...panelStyle} p={{ base: 5, md: 7 }} alignSelf="start">
             <Stack spacing={6}>
               <Box>
-                <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.14em" color="brand.700" fontWeight="800" mb={2}>
-                  PPF knobs
-                </Text>
+                <HStack spacing={3} mb={2}>
+                  <Icon as={RepeatIcon} boxSize={4} color="brand.500" />
+                  <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.14em" color="brand.700" fontWeight="800">
+                    PPF knobs
+                  </Text>
+                </HStack>
                 <Heading size="lg" color={primaryText}>
                   Turn the money dials
                 </Heading>
@@ -195,7 +201,7 @@ const PpfCalculatorPage = () => {
                   step={frequency === 'Monthly' ? 100 : 500}
                   onChange={setInvestment}
                 >
-                  <SliderTrack bg={useColorModeValue('surface.100', 'whiteAlpha.200')}>
+                  <SliderTrack bg={sliderTrackBg}>
                     <SliderFilledTrack />
                   </SliderTrack>
                   <SliderThumb />
@@ -219,7 +225,7 @@ const PpfCalculatorPage = () => {
                   step={1}
                   onChange={setYears}
                 >
-                  <SliderTrack bg={useColorModeValue('surface.100', 'whiteAlpha.200')}>
+                  <SliderTrack bg={sliderTrackBg}>
                     <SliderFilledTrack />
                   </SliderTrack>
                   <SliderThumb />
@@ -232,21 +238,30 @@ const PpfCalculatorPage = () => {
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
               <Box {...panelStyle} p={5}>
                 <Stat>
-                  <StatLabel>What you put in</StatLabel>
+                  <HStack spacing={2} mb={1}>
+                    <Icon as={InfoIcon} color="brand.500" />
+                    <StatLabel mb={0}>What you put in</StatLabel>
+                  </HStack>
                   <StatNumber fontSize="2xl">{formatCurrency(amountInvested)}</StatNumber>
                   <StatHelpText>The part your wallet remembers.</StatHelpText>
                 </Stat>
               </Box>
               <Box {...panelStyle} p={5}>
                 <Stat>
-                  <StatLabel>What it grows to</StatLabel>
+                  <HStack spacing={2} mb={1}>
+                    <Icon as={TimeIcon} color="brand.500" />
+                    <StatLabel mb={0}>What it grows to</StatLabel>
+                  </HStack>
                   <StatNumber fontSize="2xl">{formatCurrency(maturityAmount)}</StatNumber>
                   <StatHelpText>The future version with better posture.</StatHelpText>
                 </Stat>
               </Box>
               <Box {...panelStyle} p={5}>
                 <Stat>
-                  <StatLabel>Extra money made</StatLabel>
+                  <HStack spacing={2} mb={1}>
+                    <Icon as={ViewIcon} color="brand.500" />
+                    <StatLabel mb={0}>Extra money made</StatLabel>
+                  </HStack>
                   <StatNumber fontSize="2xl" color="green.500">
                     {formatCurrency(profit)}
                   </StatNumber>
@@ -256,9 +271,12 @@ const PpfCalculatorPage = () => {
             </SimpleGrid>
 
             <Box {...panelStyle} p={{ base: 5, md: 6 }}>
-              <Heading fontSize="xl" mb={4} color={primaryText}>
-                Quick snapshot
-              </Heading>
+              <HStack spacing={3} mb={4}>
+                <Icon as={InfoIcon} boxSize={4} color="brand.500" />
+                <Heading fontSize="xl" color={primaryText}>
+                  Quick snapshot
+                </Heading>
+              </HStack>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <Box borderRadius="2xl" bg={tileBg} p={5}>
                   <Text color={mutedText} fontSize="sm">
@@ -284,9 +302,12 @@ const PpfCalculatorPage = () => {
                 <AccordionItem border="none">
                   <AccordionButton px={0} _hover={{ bg: 'transparent' }}>
                     <Box flex="1" textAlign="left">
-                      <Heading fontSize="lg" color={primaryText}>
+                      <HStack spacing={3}>
+                        <Icon as={ViewIcon} boxSize={4} color="brand.500" />
+                        <Heading fontSize="lg" color={primaryText}>
                         Show me the yearly receipts for {formatCurrency(maturityAmount)}
-                      </Heading>
+                        </Heading>
+                      </HStack>
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
